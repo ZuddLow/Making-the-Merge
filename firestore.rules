@@ -1,0 +1,30 @@
+rules_version = '2';
+// Making the Merge security rules.
+// Before publishing these in the Firebase console, replace OWNER_EMAIL_HERE with the Google account email you sign in with.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isOwner() {
+      return signedIn() && request.auth.token.email_verified == true
+        && request.auth.token.email == "OWNER_EMAIL_HERE";
+    }
+
+    // Who the owner is: readable by the game, claimable only by the owner's email.
+    match /config/owner { allow read: if true; allow write: if isOwner(); }
+
+    // Card and location art: everyone sees it, only the owner changes it.
+    match /art/{doc} { allow read: if true; allow write: if isOwner(); }
+    match /artimg/{doc} { allow read: if true; allow write: if isOwner() && request.resource.data.src.size() < 900000; }
+
+    // Each player's own collection, decks and rank: private to that player.
+    match /data/users/{uid}/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Card stats: each player writes their own; only the owner reads everyone's.
+    match /stats/{uid} {
+      allow write: if signedIn() && request.auth.uid == uid;
+      allow read: if isOwner() || (signedIn() && request.auth.uid == uid);
+    }
+  }
+}

@@ -1,0 +1,108 @@
+<title>Making the Merge Card List</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: a design reference in the game's own torchlit palette. Summary, then one row per card, then the change log. */
+:root {
+  --night: #0c120f; --canopy: #151e18; --bark: #1f2b23; --line: #34473a;
+  --sand: #ece2c6; --sand-dim: #a8a088; --torch: #f3a23c;
+  --a-alliance: #3a72b4; --a-vote: #b3392a; --a-idol: #c3951f; --a-beast: #2c8550; --a-strat: #7a54b0; --a-event: #93724a; --a-host: #56635b;
+  --display: 'Alfa Slab One', Rockwell, Georgia, serif;
+  --body: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--night); color: var(--sand); font-family: var(--body); font-size: 15px; font-weight: 500; }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; display: grid; gap: 20px; }
+h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(30px, 8vw, 46px); color: var(--torch); line-height: 1; }
+h2 { font-size: 22px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--sand-dim); font-weight: 700; }
+.lead { margin: 8px 0 0; color: var(--sand-dim); max-width: 60ch; line-height: 1.45; }
+.counts { display: flex; flex-wrap: wrap; gap: 8px; }
+.counts span { background: var(--canopy); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--sand-dim); font-variant-numeric: tabular-nums; }
+.counts b { color: var(--sand); }
+.bar { display: grid; gap: 8px; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--night); padding-block: 8px; z-index: 2; border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--night); }
+.row2 { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; min-width: 0; flex: 1; }
+.chips button { flex: 0 0 auto; background: var(--canopy); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font: 600 13px var(--body); color: var(--sand-dim); cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--torch); border-color: var(--torch); color: #2a1503; }
+.chips button:focus-visible { outline: 2px solid var(--torch); outline-offset: 2px; }
+.chips small { opacity: .8; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.list { display: grid; gap: 10px; }
+.item { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; background: var(--canopy); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.mini { --ac: var(--a-host); position: relative; aspect-ratio: 3 / 4; border-radius: 7px; background: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 4px, transparent 4px 9px), linear-gradient(170deg, var(--ac), color-mix(in srgb, var(--ac) 45%, #000)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); align-self: start; }
+.mini span { position: absolute; top: 3px; min-width: 18px; height: 18px; border-radius: 9px; display: grid; place-items: center; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mini .c { left: 3px; background: var(--torch); color: #2a1503; } .mini .p { right: 3px; background: var(--sand); color: #1b1a14; }
+.a-alliance { --ac: var(--a-alliance); } .a-vote { --ac: var(--a-vote); } .a-idol { --ac: var(--a-idol); } .a-beast { --ac: var(--a-beast); } .a-strat { --ac: var(--a-strat); } .a-event { --ac: var(--a-event); } .a-host { --ac: var(--a-host); }
+.body { min-width: 0; display: grid; gap: 4px; }
+.name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.name b { font-family: var(--display); font-weight: 400; font-size: 18px; }
+.tag { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--sand-dim); }
+.tag.kw { color: var(--torch); }
+.star { color: var(--torch); }
+.does { margin: 2px 0 0; font-size: 16px; line-height: 1.35; }
+.why { margin: 0; color: var(--sand-dim); font-size: 14px; line-height: 1.4; }
+.why::before { content: "Why · "; color: var(--sand); font-weight: 700; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.log { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--sand-dim); padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); }
+td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.4; }
+td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--sand-dim); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="asof"></div>
+    <h1>Making the Merge Card List</h1>
+    <p class="lead">Every card in the game, what it does, and why it was built that way. F is fire (cost), I is influence. ★ marks the starter cards every player begins with.</p>
+  </header>
+  <div class="counts" id="counts"></div>
+  <div class="bar">
+    <div class="row2"><span class="eyebrow">Sort</span><div class="chips" id="sort" role="group" aria-label="Sort cards"></div></div>
+    <div class="chips" id="filter" role="group" aria-label="Filter cards"></div>
+  </div>
+  <div class="list" id="list"></div>
+  <section>
+    <h2>Change log</h2>
+    <p class="lead">Newest first.</p>
+    <div class="log"><table><thead><tr><th>Date</th><th>Change</th></tr></thead><tbody id="log"></tbody></table></div>
+  </section>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let sortBy = 'cost', filter = 'all';
+const SORTS = { cost: 'Fire', power: 'Influence', kw: 'Type', name: 'Name' };
+const kwOrder = Object.keys(DATA.kw);
+const fmtDate = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+function render() {
+  const cards = DATA.cards;
+  $('asof').textContent = `As of ${fmtDate(DATA.asof)} · ${cards.length} cards`;
+  const byKw = k => cards.filter(c => c.kw === k).length;
+  $('counts').innerHTML = [`<b>${cards.filter(c => !c.event).length}</b> castaways`, `<b>${cards.filter(c => c.event).length}</b> scenarios`, ...kwOrder.map(k => `<b>${byKw(k)}</b> ${DATA.kw[k]}`)].map(t => `<span>${t}</span>`).join('');
+  $('sort').innerHTML = Object.entries(SORTS).map(([k, l]) => `<button data-sort="${k}" aria-pressed="${sortBy === k}">${l}</button>`).join('');
+  const filters = [['all', 'All', cards.length], ['cast', 'Castaways', cards.filter(c => !c.event).length], ['event', 'Scenarios', cards.filter(c => c.event).length], ['starter', 'Starters', cards.filter(c => c.starter).length], ...kwOrder.map(k => [k, DATA.kw[k], byKw(k)]).filter(f => f[2])];
+  $('filter').innerHTML = filters.map(([k, l, n]) => `<button data-f="${k}" aria-pressed="${filter === k}">${l}<small>${n}</small></button>`).join('');
+  const keep = c => filter === 'all' || (filter === 'cast' ? !c.event : filter === 'event' ? c.event : filter === 'starter' ? c.starter : c.kw === filter);
+  const cmp = { cost: (a, b) => a.cost - b.cost || b.power - a.power, power: (a, b) => b.power - a.power || a.cost - b.cost, kw: (a, b) => kwOrder.indexOf(a.kw) - kwOrder.indexOf(b.kw) || a.cost - b.cost, name: () => 0 }[sortBy];
+  const shown = cards.filter(keep).sort((a, b) => cmp(a, b) || a.name.localeCompare(b.name));
+  $('list').innerHTML = shown.map(c => `<article class="item">
+      <div class="mini a-${c.arch}" aria-hidden="true"><span class="c">${c.cost}</span>${c.event ? '' : `<span class="p">${c.power}</span>`}</div>
+      <div class="body">
+        <div class="name"><b>${esc(c.name)}${c.starter ? ' <span class="star" title="Starter card">★</span>' : ''}</b><span class="tag kw">${esc(DATA.kw[c.kw])}</span><span class="tag">${c.event ? 'Scenario' : esc(c.archName)} · ${c.cost} F${c.event ? '' : ` · ${c.power} I`}</span></div>
+        <p class="does">${esc(c.text)}</p>
+        <p class="why">${esc(c.why)}</p>
+      </div></article>`).join('') || '<p class="lead">No cards match.</p>';
+  $('log').innerHTML = DATA.log.map(([d, t]) => `<tr><td>${fmtDate(d)}</td><td>${esc(t)}</td></tr>`).join('');
+}
+$('sort').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { sortBy = b.dataset.sort; render(); } });
+$('filter').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.f; render(); } });
+render();
+</script>
