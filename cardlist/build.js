@@ -2,7 +2,7 @@
 const fs = require('fs'), E = require('../src/engine.js');
 const why = require('./why.json'), log = require('./changelog.json');
 const ARCHN = { alliance: 'Alliance', vote: 'Vote Out', idol: 'Idols', beast: 'Challenge Beast', strat: 'Strategist', event: 'Scenario', host: 'Host' };
-const cards = E.CARDS.filter(c => !c.token).map(c => ({
+const cards = E.CARDS.filter(c => !c.token && !c.held).map(c => ({ // held cards stay off the public list
   id: c.id, name: c.name, cost: c.cost, power: c.power, arch: c.arch, archName: ARCHN[c.arch], kw: c.kw,
   event: c.type === 'event', starter: E.STARTER.includes(c.id),
   text: c.text.replace(/^(On Reveal|Ongoing|End of Turn|Scenario): /, '').replace(' Ongoing: ', ' '),

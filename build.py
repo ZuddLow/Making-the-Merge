@@ -48,6 +48,11 @@ HEAD = """<!doctype html>
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}html,body{height:100%}body{margin:0;font:14px system-ui,-apple-system,sans-serif;overscroll-behavior:none}img{max-width:100%}[hidden]{display:none!important}</style>
 """
 
+def check_cards():
+    # Held cards must never appear in a bot deck or the starter deck, or players would see them.
+    out = subprocess.run(['node', '-e', "const E=require('./src/engine.js');const bad=[];[...E.BOTS.map(b=>[b.name,b.deck]),['Starter',E.STARTER]].forEach(([n,d])=>d.forEach(id=>{if(!E.CARD[id])bad.push(n+': unknown '+id);else if(E.CARD[id].held)bad.push(n+': held card '+id)}));E.CARDS.forEach(c=>{if(!c.token&&!E.CARD_TIER[c.id])bad.push('no tier: '+c.id)});console.log(bad.join('\\n'))"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+    if out: sys.exit('Card check failed:\n' + out)
+
 def build_web():
     baked, files = web_art()
     page = game_page(baked, True, files)
@@ -72,4 +77,5 @@ def build_claude():
     print('built dist/claude.html')
 
 if __name__ == '__main__':
+    check_cards()
     build_claude() if (sys.argv[1:] or ['web'])[0] == 'claude' else build_web()

@@ -277,6 +277,12 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .srow .n.hi { color: #8fdb9a; } .srow .n.lo { color: #f08c78; } .srow .n.na { color: var(--line); }
 .srow .card .nm, .srow .card .cost, .srow .card .pow, .srow .card .ini { display: none; }
 #stats .tabs { grid-template-columns: repeat(var(--tabs, 2), 1fr); }
+.newtag.heldtag { background: #93b6dc; color: #0d1a29; }
+.relrow { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--canopy); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px 6px 6px; text-align: left; }
+.relrow b { font-family: var(--display); font-weight: 400; font-size: 15px; display: block; }
+.relrow small { font-size: 12px; color: var(--sand-dim); }
+.relrow small.out { color: #8fdb9a; }
+.relrow .card .nm, .relrow .card .ini { display: none; }
 .newtag { position: absolute; top: -7px; left: 50%; translate: -50% 0; z-index: 2; background: var(--torch); color: #2a1503; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
 .qv { display: grid; grid-template-columns: 132px 1fr; gap: 16px; align-items: start; }
 .qv .card { width: 132px; }
@@ -961,7 +967,7 @@ function normalize(s) {
   } else if (Array.isArray(s.deck)) {
     s.deck.forEach(id => { if (CARD[id] && !CARD[id].token) out.owned[id] = { n: 1, v: [] }; }); // carry over a v1 deck
   }
-  const cleanCards = a => Array.isArray(a) ? [...new Set(a.filter(id => out.owned[id]))].slice(0, 12) : [];
+  const cleanCards = a => Array.isArray(a) ? [...new Set(a.filter(id => out.owned[id] || (CARD[id] && CARD[id].held)))].slice(0, 12) : [];
   if (Array.isArray(s.decks)) {
     out.decks = s.decks.slice(0, MAX_DECKS).map(d => d && typeof d === 'object' ? { name: String(d.name || 'Deck').slice(0, 24), cards: cleanCards(d.cards), back: okBack(d.back) ? d.back : undefined, g: Number.isInteger(d.g) && d.g >= 0 ? d.g : 0, w: Number.isInteger(d.w) && d.w >= 0 ? Math.min(d.w, d.g || 0) : 0 } : null);
     out.active = Number.isInteger(s.active) ? s.active : 0;
@@ -1014,6 +1020,12 @@ async function flushRemote() {
   writing = false;
   if (dirty && PROFILE) setTimeout(flushRemote, 1500);
 }
+// Held cards exist in the game but are kept from players until released (in code, or from the owner's Releases tab).
+let RELEASED = new Set(), IS_OWNER = false;
+try { const r = JSON.parse(localStorage.getItem('mtm.released') || '[]'); if (Array.isArray(r)) RELEASED = new Set(r); } catch (e) {}
+const isOut = id => !CARD[id].held || RELEASED.has(id);          // available to players
+const visible = c => !c.token && (isOut(c.id) || IS_OWNER);      // shown on this device
+const canUse = id => !!save.owned[id] || (IS_OWNER && !isOut(id)); // owner playtests held cards
 const tierUnlocked = t => save.maxVotes >= TIERS_INFO[t].at;
 
 // ----- Shared art -----
@@ -1066,7 +1078,8 @@ async function initCapabilities() {
   USER = user;
   DB = db; ASSETS = assets;
   $('artBtn').hidden = !ASSETS;
-  try { $('statsBtn').hidden = !(user && await user.isOwner()); } catch (e) {}
+  try { IS_OWNER = !!(user && await user.isOwner()); } catch (e) { IS_OWNER = false; }
+  $('statsBtn').hidden = !IS_OWNER;
   if (DB) {
     try {
       DB.doc('art/main').onSnapshot(s => {
@@ -1074,6 +1087,12 @@ async function initCapabilities() {
         ART = { cards: { ...ART_BAKED.cards, ...(d.cards || {}) }, locs: { ...ART_BAKED.locs, ...(d.locs || {}) } };
         artLive = true;
         try { localStorage.setItem('mtm.art', JSON.stringify(ART)); } catch (e) {}
+        rerender();
+      }, () => {});
+      DB.doc('config/releases').onSnapshot(s => {
+        const r = s.exists && Array.isArray((s.data() || {}).released) ? s.data().released : [];
+        RELEASED = new Set(r.filter(id => CARD[id] && CARD[id].held));
+        try { localStorage.setItem('mtm.released', JSON.stringify([...RELEASED])); } catch (e) {}
         rerender();
       }, () => {});
       DB.collection('artimg').onSnapshot(qs => {
@@ -1161,7 +1180,7 @@ function renderHome() {
   $('rank').innerHTML = `<div class="emblem" style="--p:${pctNext.toFixed(0)}" role="img" aria-label="${pctNext.toFixed(0)}% of the way to ${next ? next[1] : 'the top'}">${TORCH_SVG}</div>
     <div class="eyebrow">Your rank</div><h2>${cur[1]}</h2>
     <div class="sub">${next ? `<b>${next[0] - save.votes}</b> votes to ${next[1]}` : 'Top rank reached'} · ${save.wins}W – ${save.losses}L</div>`;
-  const owned = Object.keys(save.owned).length, totalCards = CARDS.filter(c => !c.token).length;
+  const owned = Object.keys(save.owned).filter(id => isOut(id)).length, totalCards = CARDS.filter(c => !c.token && isOut(c.id)).length;
   const can = save.rice >= PACK_COST && mailPool().length;
   $('mail').innerHTML = `<div class="mr-pack" aria-hidden="true">${packHTML('ember')}</div>
     <div class="mr-txt"><b>Tree Mail</b><span>${mailPool().length ? `${PACK_COST} rice · ${owned} of ${totalCards} collected` : `All available cards found · ${owned} of ${totalCards}`}</span></div>
@@ -1180,9 +1199,9 @@ $('navMail').onclick = () => openTreeMail();
 // ----- Tree Mail -----
 // Tree Mail draws from every unlocked card; the first slot is always one you don't own.
 // You never hold two copies (until variants are released): a duplicate is traded straight back for rice.
-const mailPool = () => CARDS.filter(c => !c.token && tierUnlocked(CARD_TIER[c.id]) && !save.owned[c.id]);
+const mailPool = () => CARDS.filter(c => !c.token && isOut(c.id) && tierUnlocked(CARD_TIER[c.id]) && !save.owned[c.id]);
 function rollPack() {
-  const pool = CARDS.filter(c => !c.token && tierUnlocked(CARD_TIER[c.id]));
+  const pool = CARDS.filter(c => !c.token && isOut(c.id) && tierUnlocked(CARD_TIER[c.id]));
   const weight = c => ({ 1: 10, 2: 7, 3: 5, 4: 3 })[CARD_TIER[c.id]];
   const draw1 = list => { let r = Math.random() * list.reduce((sum, c) => sum + weight(c), 0); for (const c of list) { r -= weight(c); if (r <= 0) return c; } return list[list.length - 1]; };
   const out = [];
@@ -1296,8 +1315,8 @@ function packScene(pulls) {
 function openDecks() { renderDecks(); show('tribe'); }
 function renderDecks() {
   $('defBack').innerHTML = `${backHTML(save.defaultBack)}<span>Default card back for new decks · <b>${backName(save.defaultBack)}</b></span><em>Change</em>`;
-  const all = CARDS.filter(c => !c.token);
-  $('collected').textContent = `Collected ${Object.keys(save.owned).length} of ${all.length} cards`;
+  const all = CARDS.filter(c => !c.token && isOut(c.id));
+  $('collected').textContent = `Collected ${all.filter(c => save.owned[c.id]).length} of ${all.length} cards`;
   $('decklist').innerHTML = save.decks.map((d, i) => {
     if (!d) return `<button class="dslot empty" data-new="${i}">+ New deck</button>`;
     const full = d.cards.length === 12, on = i === save.active;
@@ -1337,10 +1356,12 @@ async function openStats() {
   }
 }
 function renderStats() {
-  const tabs = [['you', 'My games'], ...(everyone ? [['all', 'Everyone']] : []), ['foe', 'Opponents']];
+  const tabs = [['you', 'My games'], ...(everyone ? [['all', 'Everyone']] : []), ['foe', 'Opponents'], ['rel', 'Releases']];
   if (!tabs.some(t => t[0] === statsTab)) statsTab = everyone ? 'all' : 'you';
   $('statsTabs').style.setProperty('--tabs', tabs.length);
   $('statsTabs').innerHTML = tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${statsTab === k}">${l}</button>`).join('');
+  if (statsTab === 'rel') return renderReleases();
+  $('statsSort').parentElement.hidden = false;
   const foeMode = statsTab === 'foe';
   const st = statsTab === 'all' ? everyone.st : save.stats;
   const sorts = foeMode ? { games: 'Faced', win: 'Their win %' } : { games: 'Games', draw: 'Draw %', play: 'Play %', win: 'Win % played' };
@@ -1363,6 +1384,22 @@ function renderStats() {
       + (rows.map(x => `<button class="srow" data-id="${x.id}">${cardHTML(x.id)}<span><b>${esc(CARD[x.id].short)}</b><small>Win drawn ${x.winDrawn == null || x.drawnN < MIN ? '—' : x.winDrawn + '%'}</small></span><span class="n">${x.games}</span>${fmt(x.draw, x.games)}${fmt(x.play, x.drawnN)}${fmt(x.win, x.playedN, x.winDrawn)}</button>`).join('') || '<p class="status">Play a match to start tracking.</p>');
   }
 }
+function renderReleases() {
+  $('statsSort').parentElement.hidden = true;
+  const held = CARDS.filter(c => c.held);
+  $('statsNote').textContent = held.length ? 'Held cards are hidden from players: not in Tree Mail, collections, deck building or the card list. You can playtest them in your own decks. Releasing puts a card into Tree Mail for everyone.' : 'No held cards right now. Ask Claude to add new cards as held, and they will appear here to release when you are ready.';
+  $('statsList').innerHTML = held.map(c => { const out = RELEASED.has(c.id);
+    return `<div class="relrow">${cardHTML(c.id)}<span><b>${esc(c.name)}</b><small class="${out ? 'out' : ''}">${out ? 'Released to players' : 'Held'} · ${TIERS_INFO[CARD_TIER[c.id]].name} · ${KW[c.kw]}</small></span><button class="btn small ${out ? '' : 'primary'}" data-rel="${c.id}" ${DB ? '' : 'disabled'}>${out ? 'Hold again' : 'Release'}</button></div>`; }).join('');
+}
+$('statsList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-rel]'); if (!b || !DB) return;
+  const id = b.dataset.rel, next = new Set(RELEASED);
+  if (next.has(id)) next.delete(id); else next.add(id);
+  b.disabled = true;
+  try { await DB.doc('config/releases').set({ released: [...next] }); RELEASED = next; try { localStorage.setItem('mtm.released', JSON.stringify([...RELEASED])); } catch (err) {} toast(next.has(id) ? `${CARD[id].name} is released. Players can pull it from Tree Mail.` : `${CARD[id].name} is held again.`); }
+  catch (err) { toast("That change couldn't be saved. Try again."); }
+  renderStats();
+});
 $('statsTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; statsTab = b.dataset.tab; renderStats(); });
 $('statsSort').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; statsSort = b.dataset.sort; renderStats(); });
 $('statsList').addEventListener('click', e => { const b = e.target.closest('.srow[data-id]'); if (b) gameQuickView({ id: b.dataset.id }, {}); });
@@ -1373,22 +1410,23 @@ $('statsBtn').onclick = openStats;
 let colSort = 'cost', colFilter = 'all';
 function openCollection() { renderCollection(); show('collection'); $('colGrid').scrollTop = 0; }
 function renderCollection() {
-  const all = CARDS.filter(c => !c.token), fresh = save.fresh || [];
-  const have = all.filter(c => save.owned[c.id]).length;
-  $('colCount').textContent = `Collected ${have} of ${all.length}` + (fresh.length ? ` · ${fresh.length} new` : '');
+  const all = CARDS.filter(visible), fresh = save.fresh || [];
+  const have = all.filter(c => save.owned[c.id] && isOut(c.id)).length, released = all.filter(c => isOut(c.id)).length;
+  const held = all.length - released;
+  $('colCount').textContent = `Collected ${have} of ${released}` + (fresh.length ? ` · ${fresh.length} new` : '') + (held ? ` · ${held} held (only you see these)` : '');
   $('colSort').innerHTML = Object.entries(SORTS).map(([k, l]) => `<button data-sort="${k}" aria-pressed="${colSort === k}">${l}</button>`).join('');
-  const filters = [['all', 'All', all.length], ['owned', 'Owned', have], ['missing', 'Missing', all.length - have], ...(fresh.length ? [['new', 'New', fresh.length]] : []), ...Object.keys(KW).map(k => [k, KW[k], all.filter(c => c.kw === k).length])];
+  const filters = [['all', 'All', all.length], ['owned', 'Owned', have], ['missing', 'Missing', released - have], ...(fresh.length ? [['new', 'New', fresh.length]] : []), ...(held ? [['held', 'Held', held]] : []), ...Object.keys(KW).map(k => [k, KW[k], all.filter(c => c.kw === k).length])];
   $('colChips').innerHTML = filters.map(([k, label, n]) => `<button data-kw="${k}" aria-pressed="${colFilter === k}" ${n ? '' : 'disabled title="No cards yet"'}>${label}<small>${n}</small></button>`).join('');
-  const keep = c => colFilter === 'all' || (colFilter === 'owned' ? save.owned[c.id] : colFilter === 'missing' ? !save.owned[c.id] : colFilter === 'new' ? fresh.includes(c.id) : c.kw === colFilter);
+  const keep = c => colFilter === 'all' || (colFilter === 'owned' ? save.owned[c.id] && isOut(c.id) : colFilter === 'missing' ? !save.owned[c.id] && isOut(c.id) : colFilter === 'new' ? fresh.includes(c.id) : colFilter === 'held' ? !isOut(c.id) : c.kw === colFilter);
   $('colGrid').innerHTML = sortCards(all.filter(keep), colSort).map(d => {
-    const own = save.owned[d.id], isNew = fresh.includes(d.id);
-    return `<button class="tile" data-id="${d.id}">${isNew ? '<span class="newtag">New</span>' : ''}${cardHTML(d.id, { cls: own ? '' : 'locked' })}<span class="lbl">${own ? KW[d.kw] : 'Missing'}</span></button>`;
+    const own = save.owned[d.id], isNew = fresh.includes(d.id), held = !isOut(d.id);
+    return `<button class="tile" data-id="${d.id}">${held ? '<span class="newtag heldtag">Held</span>' : isNew ? '<span class="newtag">New</span>' : ''}${cardHTML(d.id, { cls: own || held ? '' : 'locked' })}<span class="lbl">${held ? 'Unreleased' : own ? KW[d.kw] : 'Missing'}</span></button>`;
   }).join('') || '<p class="status">No cards match.</p>';
 }
 $('colGrid').addEventListener('click', e => {
   const t = e.target.closest('.tile'); if (!t) return;
   const id = t.dataset.id, own = save.owned[id], tier = TIERS_INFO[CARD_TIER[id]];
-  const note = own ? 'In your collection.' : tierUnlocked(CARD_TIER[id]) ? 'Not found yet. It can arrive in Tree Mail.' : `Not found yet. ${tier.name} cards unlock at ${tier.rank}.`;
+  const note = !isOut(id) ? 'Held: only you can see this card. Release it from Designer → Releases.' : own ? 'In your collection.' : tierUnlocked(CARD_TIER[id]) ? 'Not found yet. It can arrive in Tree Mail.' : `Not found yet. ${tier.name} cards unlock at ${tier.rank}.`;
   gameQuickView({ id }, { note, locked: !own });
 });
 $('colSort').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; colSort = b.dataset.sort; renderCollection(); $('colGrid').scrollTop = 0; });
@@ -1430,25 +1468,26 @@ function sortCards(list, key = sortBy) {
   return list.slice().sort((a, b) => (!!save.owned[b.id] - !!save.owned[a.id]) || by(a, b) || a.short.localeCompare(b.short));
 }
 function renderEditor() {
+  edit.cards = edit.cards.filter(id => canUse(id) || save.owned[id]);
   $('deckBack').innerHTML = `${backHTML(edit.back)}<span>Card back · <b>${backName(edit.back)}</b></span><em>Change</em>`;
-  const all = CARDS.filter(c => !c.token);
+  const all = CARDS.filter(visible);
   $('count').textContent = `${edit.cards.length} / 12`;
   $('count').className = 'count' + (edit.cards.length === 12 ? ' full' : '');
   $('deckstrip').innerHTML = edit.cards.slice().sort((a, b) => CARD[a].cost - CARD[b].cost).map(id => `<button class="tile" data-id="${id}" aria-label="${esc(CARD[id].name)}">${cardHTML(id)}</button>`).join('')
     + Array.from({ length: 12 - edit.cards.length }, () => '<div class="gap" aria-hidden="true">+</div>').join('');
   $('sortChips').innerHTML = Object.entries(SORTS).map(([k, l]) => `<button data-sort="${k}" aria-pressed="${sortBy === k}">${l}</button>`).join('');
-  const filters = [['all', 'All', all.length], ['owned', 'Owned', all.filter(c => save.owned[c.id]).length], ...Object.keys(KW).map(k => [k, KW[k], all.filter(c => c.kw === k).length])];
+  const filters = [['all', 'All', all.length], ['owned', 'Owned', all.filter(c => save.owned[c.id]).length], ...(IS_OWNER && all.some(c => !isOut(c.id)) ? [['held', 'Held', all.filter(c => !isOut(c.id)).length]] : []), ...Object.keys(KW).map(k => [k, KW[k], all.filter(c => c.kw === k).length])];
   $('chips').innerHTML = filters.map(([k, label, n]) => `<button data-kw="${k}" aria-pressed="${poolFilter === k}" ${n ? '' : 'disabled title="No cards yet"'}>${label}<small>${n}</small></button>`).join('');
-  const shown = sortCards(all.filter(c => poolFilter === 'all' || (poolFilter === 'owned' ? save.owned[c.id] : c.kw === poolFilter)));
+  const shown = sortCards(all.filter(c => poolFilter === 'all' || (poolFilter === 'owned' ? save.owned[c.id] : poolFilter === 'held' ? !isOut(c.id) : c.kw === poolFilter)));
   $('pool').innerHTML = shown.map(d => {
-    const own = !!save.owned[d.id], inDeck = edit.cards.includes(d.id);
-    return `<button class="tile ${inDeck ? 'indeck' : ''}" data-id="${d.id}">${cardHTML(d.id, { cls: own ? '' : 'locked' })}<span class="lbl ${inDeck ? 'in' : ''}">${inDeck ? 'In deck' : own ? KW[d.kw] : 'Locked'}</span></button>`;
+    const own = canUse(d.id), inDeck = edit.cards.includes(d.id), held = !isOut(d.id);
+    return `<button class="tile ${inDeck ? 'indeck' : ''}" data-id="${d.id}">${held ? '<span class="newtag heldtag">Held</span>' : ''}${cardHTML(d.id, { cls: own ? '' : 'locked' })}<span class="lbl ${inDeck ? 'in' : ''}">${inDeck ? 'In deck' : held ? 'Playtest' : own ? KW[d.kw] : 'Locked'}</span></button>`;
   }).join('');
   $('deckDelete').textContent = delArmed ? 'Tap again to delete' : 'Delete deck';
 }
 function quickView(id) {
-  const d = CARD[id], own = save.owned[id], inDeck = edit && edit.cards.includes(id), tier = TIERS_INFO[CARD_TIER[id]];
-  const lockMsg = own ? 'In your collection.' : tierUnlocked(CARD_TIER[id]) ? `Not found yet. It can arrive in Tree Mail.` : `Not found yet. ${tier.name} cards unlock at ${tier.rank}.`;
+  const d = CARD[id], own = canUse(id), inDeck = edit && edit.cards.includes(id), tier = TIERS_INFO[CARD_TIER[id]];
+  const lockMsg = !isOut(id) ? 'Held: only you can see and playtest this card.' : own ? 'In your collection.' : tierUnlocked(CARD_TIER[id]) ? `Not found yet. It can arrive in Tree Mail.` : `Not found yet. ${tier.name} cards unlock at ${tier.rank}.`;
   const act = !edit ? '' : !own ? '<button class="btn" disabled>Locked</button>' : inDeck ? '<button class="btn" id="qvAct">Remove from deck</button>' : `<button class="btn primary" id="qvAct" ${edit.cards.length >= 12 ? 'disabled' : ''}>${edit.cards.length >= 12 ? 'Deck is full' : 'Add to deck'}</button>`;
   $('panel').className = 'panel';
   $('panel').innerHTML = `<div class="qv">${cardHTML(id, { cls: own ? '' : 'locked' })}<div class="qv-txt">

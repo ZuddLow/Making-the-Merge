@@ -22,6 +22,10 @@ The site is unlisted (search engines are told not to index it), so share the lin
 
 After changing anything in `src/`, `art/` or `cardlist/`, run `python3 build.py` and commit the rebuilt `index.html` and `cards.html`. `python3 build.py claude` builds the Claude artifact version into `dist/`.
 
+## Holding cards until release
+
+Give a card `held: true` in `src/engine.js` and it stays out of players' hands: no Tree Mail pulls, no collection or deck-builder listing, and no card list entry. Only the owner sees it (tagged **Held**) and can playtest it in their own decks. To release it, open **Designer → Releases** on the site and tap **Release**; it goes into Tree Mail for everyone right away. To make a release permanent, remove `held: true` and rebuild. The build refuses to include a held card in a bot or starter deck.
+
 ## Turning on Google sign-in (one-time Firebase setup)
 
 Until this is done, the site works but each player's progress stays on their own device.

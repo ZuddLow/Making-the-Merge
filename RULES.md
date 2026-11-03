@@ -99,4 +99,5 @@ The full card list with design notes and change log is published as the Making t
 - **Ulong** (Idols & Beasts): cochran, erik, maryanne, russell, tony, ozzy, brian, jeremy, joe, kim, dee, westman
 
 ## Design rules
+- New cards can be added as held: built and playtestable by the owner, but invisible to players until released from Designer → Releases.
 - No two cards may share an identical ability. Close variants are fine when timing (On Reveal vs Ongoing) or scope differs.
