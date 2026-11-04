@@ -4,7 +4,7 @@
 - 12-card decks. 6 turns (7 if The Outback is in play). 3 locations, revealed on turns 1, 2, 3.
 - Fire (energy) = turn number, plus any extra fire from cards or locations. Start with 3 cards, draw 1 each turn (hand max 7).
 - Both players play secretly; the player winning more locations reveals first.
-- Face-down cards (The Urn, Natalie White) hold a space but add no influence and cannot be targeted until the game ends; then they flip in play order before the winner is decided.
+- Face-down cards (The Voting Booth, Natalie White) hold a space but add no influence and cannot be targeted until the game ends; then they flip in play order before the winner is decided.
 - Max 4 cards per side at a location. Win 2 of 3 locations; total influence breaks a split.
 - Stakes start at 1 jury vote. Playing your idol doubles them from next turn; the final turn (6, or 7) doubles them again. Quitting loses the current stakes only.
 - Ranks: Castaway 0, Swing Vote 10, Merged 25, Juror 45, Finalist 70, Sole Survivor 100.
@@ -114,7 +114,7 @@ The full card list with design notes and change log is the site's cards.html pag
 - **Island of the Idols**: End of each turn: cards here get +1 influence.
 - **Flint Reward**: Each card you play here gives you +1 fire next turn.
 - **The Outback**: When revealed, the game lasts 7 turns.
-- **The Urn**: Cards played here stay face-down until the game ends.
+- **The Voting Booth**: Cards played here stay face-down until the game ends.
 
 ## Bot tribes
 - **Tagi** (Alliance): cochran, maryanne, parvati, tony, reward, yamyam, rob, hatch, joe, cirie, kim, westman

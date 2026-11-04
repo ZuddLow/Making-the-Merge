@@ -113,7 +113,7 @@ const LOCS = [
   { id: 'island', name: 'Island of the Idols', text: 'End of each turn: cards here get +1 influence.' },
   { id: 'flintreward', name: 'Flint Reward', text: 'Each card you play here gives you +1 fire next turn.' },
   { id: 'outback', name: 'The Outback', text: 'When revealed, the game lasts 7 turns.' },
-  { id: 'urn', name: 'The Urn', text: 'Cards played here stay face-down until the game ends.' }
+  { id: 'urn', name: 'The Voting Booth', text: 'Cards played here stay face-down until the game ends.' }
 ];
 const LOC = Object.fromEntries(LOCS.map(l => [l.id, l]));
 
@@ -169,7 +169,7 @@ function draw(g, p, n = 1) {
   for (let i = 0; i < n; i++) { if (!P.deck.length || P.hand.length >= 7) return; P.hand.push(P.deck.pop()); }
 }
 
-// Face-down cards (The Urn, Natalie White) sit in L.hid until the game ends: they hold a space but don't count yet.
+// Face-down cards (The Voting Booth, Natalie White) sit in L.hid until the game ends: they hold a space but don't count yet.
 function occ(L, p) { return L.sides[p].length + (L.hid ? L.hid[p].length : 0); }
 const hidesAt = L => (L.revealed && L.id === 'urn') || L.sides.some(sd => sd.some(o => o.id === 'nwhite'));
 function cap(L) { if (L.revealed) { if (L.id === 'exile') return 1; if (L.id === 'fire') return 2; } return 4; }
