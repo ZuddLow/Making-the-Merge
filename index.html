@@ -2004,11 +2004,13 @@ async function endTurn() {
 }
 
 // ----- Board animation: compare the board before and after each step -----
+// Where a card sits in the layout, ignoring any animation that is scaling or moving it right now
+function layoutPos(el) { let x = 0, y = 0, n = el; while (n) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; } return { x, y }; }
 function boardSnap() {
   const cards = new Map(), tots = [];
   document.querySelectorAll('#board .card[data-uid]').forEach(el => {
     const uid = +el.dataset.uid; if (!uid) return;
-    cards.set(uid, { rect: el.getBoundingClientRect(), html: el.outerHTML, staged: el.classList.contains('staged') || el.classList.contains('hidmine'), pow: cardPow(uid) });
+    cards.set(uid, { rect: el.getBoundingClientRect(), pos: layoutPos(el), html: el.outerHTML, staged: el.classList.contains('staged') || el.classList.contains('hidmine'), pow: cardPow(uid) });
   });
   if (G) G.locs.forEach((L, li) => tots.push([total(G, li, 0), total(G, li, 1)]));
   return { cards, tots, changed: false };
@@ -2029,8 +2031,8 @@ function animateBoard(prev) {
   document.querySelectorAll('#board .card[data-uid]').forEach(el => { const uid = +el.dataset.uid; if (uid) now.set(uid, el); });
   now.forEach((el, uid) => {
     const p = prev.cards.get(uid); if (!p) return;
-    const r = el.getBoundingClientRect();
-    const dx = p.rect.left - r.left, dy = p.rect.top - r.top;
+    const r = el.getBoundingClientRect(), q = layoutPos(el);
+    const dx = p.pos.x - q.x, dy = p.pos.y - q.y;
     if (!rm && (Math.abs(dx) > 4 || Math.abs(dy) > 4) && !p.staged) {     // moved, flipped or switched sides: slide it over
       el.animate([{ transform: `translate(${dx}px, ${dy}px)`, zIndex: 5 }, { transform: 'none', zIndex: 5 }], { duration: 650, easing: 'cubic-bezier(.3,.7,.2,1)' });
       changed = true;
@@ -2042,7 +2044,7 @@ function animateBoard(prev) {
     if (now.has(uid) || p.staged) return;
     const g = document.createElement('div'); g.innerHTML = p.html;
     const el = g.firstElementChild; if (!el) return;
-    el.classList.add('snuff'); el.classList.remove('flip');
+    el.classList.add('snuff'); el.classList.remove('flip', 'powbump', 'shielded', 'idolpop');
     Object.assign(el.style, { position: 'fixed', left: p.rect.left + 'px', top: p.rect.top + 'px', width: p.rect.width + 'px', height: p.rect.height + 'px', margin: 0 });
     $('fxlayer').appendChild(el); setTimeout(() => el.remove(), 1300); changed = true;
   });
