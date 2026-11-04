@@ -82,6 +82,7 @@ const CARDS = [
   { id: 'flint', name: 'Flint', short: 'Flint', cost: 1, power: 0, arch: 'event', type: 'event', text: 'Scenario: You get +1 fire every turn for the rest of the game.' },
   { id: 'elisabeth', name: 'Elisabeth Hasselbeck', short: 'Elisabeth', cost: 3, power: 4, arch: 'strat', text: 'On Reveal: This location becomes The Outback.' },
   { id: 'holloway', name: 'Mike Holloway', short: 'Holloway', cost: 7, power: 13, arch: 'beast', text: 'No ability.' },
+  { id: 'nwhite', name: 'Natalie White', short: 'Natalie W.', cost: 3, power: 4, arch: 'strat', text: 'Ongoing: Cards played here after this stay face-down until the game ends.' },
   { id: 'fakeidol', name: 'Fake Idol', short: 'Fake Idol', cost: 1, power: 0, arch: 'event', type: 'event', token: true, text: 'Scenario: Does nothing. Bob made it out of a stick.' },
   { id: 'goat', name: 'Goat', short: 'Goat', cost: 0, power: 0, arch: 'goat', token: true, text: 'Takes up a spot. Does nothing.' }
 ];
@@ -89,7 +90,7 @@ const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
 // Ability types. Cards that fire when something happens keep the 'reaction' label.
 const KW = { reveal: 'On Reveal', ongoing: 'Ongoing', start: 'Start of Turn', end: 'End of Turn', objective: 'Objective', reaction: 'Reaction', none: 'No ability' };
 const CARD_KW = {
-  ongoing: ['erik', 'parvati', 'sandra', 'ozzy', 'rob', 'jeremy', 'hatch', 'kim', 'amber', 'tina', 'michele', 'colby', 'ben', 'earl', 'rudy', 'ethan', 'yul', 'dreamz', 'james', 'steph'],
+  ongoing: ['erik', 'parvati', 'sandra', 'ozzy', 'rob', 'jeremy', 'hatch', 'kim', 'amber', 'tina', 'michele', 'colby', 'ben', 'earl', 'rudy', 'ethan', 'yul', 'dreamz', 'james', 'steph', 'nwhite'],
   reaction: ['natalie', 'rick', 'spencer'],
   end: ['tyson', 'ian'],
   none: ['joe', 'westman', 'holloway', 'goat'],
@@ -111,7 +112,8 @@ const LOCS = [
   { id: 'camp', name: 'Day 1 Camp', text: 'No effect. Build a shelter.' },
   { id: 'island', name: 'Island of the Idols', text: 'End of each turn: cards here get +1 influence.' },
   { id: 'flintreward', name: 'Flint Reward', text: 'Each card you play here gives you +1 fire next turn.' },
-  { id: 'outback', name: 'The Outback', text: 'When revealed, the game lasts 7 turns.' }
+  { id: 'outback', name: 'The Outback', text: 'When revealed, the game lasts 7 turns.' },
+  { id: 'urn', name: 'The Urn', text: 'Cards played here stay face-down until the game ends.' }
 ];
 const LOC = Object.fromEntries(LOCS.map(l => [l.id, l]));
 
@@ -138,7 +140,7 @@ const CARD_TIER = {
   kelly: 1, phillip: 1, wade: 1,
   necklace: 1, shotdark: 1, nullifier: 1, extravote: 1, doordie: 1,
   rudy: 1, ethan: 1, lex: 1, vecepia: 1, robc: 1, chrisd: 1, terry: 1, yul: 1, yauman: 1, dreamz: 1, james: 1, bob: 1, steph: 1, ian: 1,
-  tai: 1, wendell: 1, flint: 1, elisabeth: 1, holloway: 1
+  tai: 1, wendell: 1, flint: 1, elisabeth: 1, holloway: 1, nwhite: 1
 };
 
 let RNG = Math.random;
@@ -153,8 +155,8 @@ function emit(g, ev) { g.events.push(ev); }
 
 function newGame(deck0, deck1) {
   const g = { turn: 0, uid: 1, locs: [], players: [], votedOut: 0, stakes: 1, pending: 1, idol: [false, false],
-    events: [], over: false, result: null, turnPlays: [[], []], outBy: [0, 0], gone: [], lastTurn: 6, finalDoubled: false };
-  g.locs = shuffle(LOCS.map(l => l.id)).slice(0, 3).map(id => ({ id, revealed: false, sides: [[], []], idolGiven: [false, false] }));
+    events: [], over: false, result: null, turnPlays: [[], []], outBy: [0, 0], gone: [], lastTurn: 6, finalDoubled: false, seq: 0 };
+  g.locs = shuffle(LOCS.map(l => l.id)).slice(0, 3).map(id => ({ id, revealed: false, sides: [[], []], hid: [[], []], idolGiven: [false, false] }));
   [deck0, deck1].forEach((d, p) => {
     g.players.push({ deck: shuffle(d.map(id => mk(g, id, p))), hand: [], staged: [], energy: 0, played: 0, events: 0, kellyArm: false, fireNext: 0, fireAlways: 0 });
   });
@@ -167,10 +169,13 @@ function draw(g, p, n = 1) {
   for (let i = 0; i < n; i++) { if (!P.deck.length || P.hand.length >= 7) return; P.hand.push(P.deck.pop()); }
 }
 
+// Face-down cards (The Urn, Natalie White) sit in L.hid until the game ends: they hold a space but don't count yet.
+function occ(L, p) { return L.sides[p].length + (L.hid ? L.hid[p].length : 0); }
+const hidesAt = L => (L.revealed && L.id === 'urn') || L.sides.some(sd => sd.some(o => o.id === 'nwhite'));
 function cap(L) { if (L.revealed) { if (L.id === 'exile') return 1; if (L.id === 'fire') return 2; } return 4; }
 function space(g, li, p) {
   const L = g.locs[li];
-  return cap(L) - L.sides[p].length - g.players[p].staged.filter(s => s.loc === li).length;
+  return cap(L) - occ(L, p) - g.players[p].staged.filter(s => s.loc === li).length;
 }
 function fireLeft(g, p) { const P = g.players[p]; return P.energy - P.staged.reduce((s, x) => s + CARD[x.card.id].cost, 0); }
 function canStage(g, p, card, li) { return CARD[card.id].cost <= fireLeft(g, p) && space(g, li, p) > 0; }
@@ -267,11 +272,11 @@ function voteOut(g, c) {
   emit(g, { t: 'out', uid: c.uid, id: c.id, owner: c.owner });
   g.locs.forEach(M => M.sides[c.owner].forEach(o => { if (o.id === 'natalie') o.perm += 3; }));
   if (c.id === 'rick') {
-    const d = [0, 1, 2].filter(i => g.locs[i].sides[c.owner].length < cap(g.locs[i]));
+    const d = [0, 1, 2].filter(i => occ(g.locs[i], c.owner) < cap(g.locs[i]));
     if (d.length) { c.perm += 3; place(g, c, pick(d), c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'back', uid: c.uid, id: c.id }); }
   } else {
     const ei = g.locs.findIndex(M => M.revealed && M.id === 'edge');
-    if (ei >= 0 && ei !== from && g.locs[ei].sides[c.owner].length < cap(g.locs[ei])) { place(g, c, ei, c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'edge', uid: c.uid, id: c.id }); }
+    if (ei >= 0 && ei !== from && occ(g.locs[ei], c.owner) < cap(g.locs[ei])) { place(g, c, ei, c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'edge', uid: c.uid, id: c.id }); }
   }
   return true;
 }
@@ -293,9 +298,9 @@ function playEffects(g, c, li, p) {
     case 'russell': g.locs.forEach(M => { const b = maxBy(M.sides[p], o => power(g, o)); if (b) b.idol = true; }); emit(g, { t: 'russell' }); break;
     case 'kass': { let n = 0; for (const o of L.sides[p].filter(o => o !== c)) if (voteOut(g, o)) n++; c.perm += 3 * n; break; }
     case 'yamyam': L.sides[p].forEach(o => { if (o !== c) o.perm += 1; }); break;
-    case 'brian': g.locs.forEach((M, mi) => { if (mi !== li && M.sides[op].length < cap(M)) place(g, mk(g, 'goat', op), mi, op); }); emit(g, { t: 'goats' }); break;
+    case 'brian': g.locs.forEach((M, mi) => { if (mi !== li && occ(M, op) < cap(M)) place(g, mk(g, 'goat', op), mi, op); }); emit(g, { t: 'goats' }); break;
     case 'cirie': {
-      if (isImmunity(L) || L.sides[p].length >= cap(L)) break;
+      if (isImmunity(L) || occ(L, p) >= cap(L)) break;
       const t = minBy(L.sides[op].filter(o => power(g, o) <= 3 && !fixedCard(o)), o => power(g, o));
       if (t) { removeFrom(g, t); place(g, t, li, p); emit(g, { t: 'flip', uid: t.uid, id: t.id }); }
       break;
@@ -311,7 +316,7 @@ function playEffects(g, c, li, p) {
       break;
     case 'reward': L.sides[p].forEach(o => { if (o !== c) o.perm += 2; }); break;
     case 'wade': {
-      if (L.sides[p].length >= cap(L)) break;
+      if (occ(L, p) >= cap(L)) break;
       const cands = [];
       g.locs.forEach((M, mi) => { if (mi !== li && !isImmunity(M)) M.sides[p].forEach(o => { if (!fixedCard(o)) cands.push(o); }); });
       const t = maxBy(cands, o => power(g, o));
@@ -320,7 +325,7 @@ function playEffects(g, c, li, p) {
     }
     case 'lex': {
       c.perm += 3;
-      if (isImmunity(L) || L.sides[op].length >= cap(L)) break;
+      if (isImmunity(L) || occ(L, op) >= cap(L)) break;
       const t = minBy(L.sides[p].filter(o => o !== c && !fixedCard(o)), o => power(g, o));
       if (t) { removeFrom(g, t); place(g, t, li, op); emit(g, { t: 'lex', uid: t.uid, id: t.id }); }
       break;
@@ -338,11 +343,11 @@ function playEffects(g, c, li, p) {
       break;
     case 'bob': { const H = g.players[op].hand; if (H.length < 7) { H.push(mk(g, 'fakeidol', op)); emit(g, { t: 'fakeidol', owner: op }); } break; }
     case 'phillip':
-      if (L.sides[op].length < cap(L)) { removeFrom(g, c); place(g, c, li, op); emit(g, { t: 'mole', uid: c.uid, id: c.id }); }
+      if (occ(L, op) < cap(L)) { removeFrom(g, c); place(g, c, li, op); emit(g, { t: 'mole', uid: c.uid, id: c.id }); }
       break;
     case 'carolyn': {
       if (isImmunity(L)) break;
-      const d = [0, 1, 2].filter(i => i !== li && g.locs[i].sides[p].length < cap(g.locs[i]));
+      const d = [0, 1, 2].filter(i => i !== li && occ(g.locs[i], p) < cap(g.locs[i]));
       if (d.length) { removeFrom(g, c); place(g, c, pick(d), p); c.perm += 2; emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
       break;
     }
@@ -365,7 +370,7 @@ function playEffects(g, c, li, p) {
     case 'tribeswap': {
       if (isImmunity(L)) break;
       const t = maxBy(L.sides[op].filter(o => !fixedCard(o)), o => power(g, o)); if (!t) break;
-      const d = [0, 1, 2].filter(i => i !== li && g.locs[i].sides[op].length < cap(g.locs[i]));
+      const d = [0, 1, 2].filter(i => i !== li && occ(g.locs[i], op) < cap(g.locs[i]));
       if (d.length) { removeFrom(g, t); place(g, t, pick(d), op); emit(g, { t: 'moved', uid: t.uid, id: t.id }); }
       break;
     }
@@ -377,7 +382,7 @@ function playEffects(g, c, li, p) {
   else if (P.kellyArm && def.type !== 'event' && c.loc >= 0 && c.owner === p) {
     P.kellyArm = false;
     const from = g.locs[c.loc], to = c.loc - 1, T = g.locs[to];
-    if (to >= 0 && !fixedCard(c) && !isImmunity(from) && T.sides[p].length < cap(T)) { removeFrom(g, c); place(g, c, to, p); emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
+    if (to >= 0 && !fixedCard(c) && !isImmunity(from) && occ(T, p) < cap(T)) { removeFrom(g, c); place(g, c, to, p); emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
   }
   if (def.type === 'event' && c.loc >= 0) { removeFrom(g, c); g.gone.push({ uid: c.uid, id: c.id, owner: p, turn: g.turn, why: 'scenario' }); }
 }
@@ -393,8 +398,14 @@ function* resolveTurn(g) {
     while (P.staged.length) {
       const { card, loc } = P.staged.shift();
       const L = g.locs[loc];
-      if (L.sides[p].length >= cap(L)) { if (P.hand.length < 7) P.hand.push(card); else P.deck.unshift(card); emit(g, { t: 'nofit', uid: card.uid, id: card.id, owner: p }); continue; }
-      place(g, card, loc, p); card.turn = g.turn;
+      if (occ(L, p) >= cap(L)) { if (P.hand.length < 7) P.hand.push(card); else P.deck.unshift(card); emit(g, { t: 'nofit', uid: card.uid, id: card.id, owner: p }); continue; }
+      if (hidesAt(L)) {
+        card.owner = p; card.loc = loc; card.turn = g.turn; card.seq = g.seq++;
+        L.hid[p].push(card); P.played++; if (CARD[card.id].type === 'event') P.events++;
+        yield { t: 'hide', uid: card.uid, id: card.id, loc, owner: p };
+        continue;
+      }
+      place(g, card, loc, p); card.turn = g.turn; card.seq = g.seq++;
       P.played++; if (CARD[card.id].type === 'event') P.events++;
       yield { t: 'reveal', uid: card.uid };
       playEffects(g, card, loc, p);
@@ -425,6 +436,7 @@ function* endOfTurn(g) {
     const ns = [L.sides[1].filter(c => !fixedCard(c)).concat(stay[0]), L.sides[0].filter(c => !fixedCard(c)).concat(stay[1])];
     L.sides = ns[0].length <= cap(L) && ns[1].length <= cap(L) ? ns : [L.sides[1], L.sides[0]]; // no room to stay put: Rudy swaps too
     L.sides.forEach((s, p) => s.forEach(c => { c.owner = p; }));
+    L.hid = [L.hid[1], L.hid[0]]; L.hid.forEach((s, p) => s.forEach(c => { c.owner = p; }));
     emit(g, { t: 'swap' }); yield { t: 'swap' };
   }
   for (const [li, L] of g.locs.entries()) for (const p of [0, 1]) for (const c of [...L.sides[p]]) {
@@ -436,6 +448,19 @@ function* endOfTurn(g) {
     }
   }
   if (g.turn >= g.lastTurn) {
+    // The votes are read: face-down cards flip in the order they were played
+    const pend = [];
+    g.locs.forEach((L, li) => [0, 1].forEach(p => L.hid[p].forEach(c => pend.push({ c, li }))));
+    if (pend.length) { emit(g, { t: 'urnreveal', n: pend.length }); yield { t: 'urn' }; }
+    pend.sort((a, b) => a.c.seq - b.c.seq);
+    for (const { c, li } of pend) {
+      const L = g.locs[li], p = c.owner;
+      L.hid[p].splice(L.hid[p].indexOf(c), 1);
+      place(g, c, li, p);
+      yield { t: 'reveal', uid: c.uid };
+      playEffects(g, c, li, p);
+      yield { t: 'after', uid: c.uid };
+    }
     // Objectives are checked at game end, before the winner is decided
     for (const [li, L] of g.locs.entries()) for (const p of [0, 1]) for (const c of L.sides[p]) {
       if (c.id !== 'chrisd') continue;
@@ -464,7 +489,8 @@ function simEval(g, p, play) {
   const saved = RNG; let seed = 7; RNG = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
   try {
     for (const { card, loc } of list) {
-      const L = h.locs[loc]; if (L.sides[p].length >= cap(L)) continue;
+      const L = h.locs[loc]; if (occ(L, p) >= cap(L)) continue;
+      if (hidesAt(L)) { L.hid[p].push(card); continue; }
       place(h, card, loc, p); card.turn = h.turn; h.players[p].played++; if (CARD[card.id].type === 'event') h.players[p].events++;
       playEffects(h, card, loc, p);
     }
@@ -491,7 +517,7 @@ function botWantsIdol(g, p) {
   if (g.idol[p] || g.turn < 3) return false;
   const h = JSON.parse(JSON.stringify({ ...g, events: [] }));
   const list = h.players[p].staged; h.players[p].staged = [];
-  for (const { card, loc } of list) if (h.locs[loc].sides[p].length < cap(h.locs[loc])) place(h, card, loc, p);
+  for (const { card, loc } of list) if (occ(h.locs[loc], p) < cap(h.locs[loc])) place(h, card, loc, p);
   let lead = 0, won = 0;
   h.locs.forEach((L, li) => { const d = total(h, li, p) - total(h, li, 1 - p); if (d > 0) { won++; lead += Math.min(d, 10); } });
   return won >= 2 && lead >= 10 + (g.lastTurn - g.turn) * 2;
@@ -503,4 +529,4 @@ function botWantsQuit(g, p) {
   return lost >= 2 && gap >= (g.turn === g.lastTurn ? 12 : 18);
 }
 
-if (typeof module !== 'undefined') module.exports = { KW, TIERS_INFO, CARD_TIER, CARDS, CARD, LOCS, BOTS, STARTER, newGame, startTurn, resolveTurn, botPlan, botWantsIdol, botWantsQuit, playIdol, quit, stage, total, power, cap, standing, setRNG: f => { RNG = f; } };
+if (typeof module !== 'undefined') module.exports = { occ, KW, TIERS_INFO, CARD_TIER, CARDS, CARD, LOCS, BOTS, STARTER, newGame, startTurn, resolveTurn, botPlan, botWantsIdol, botWantsQuit, playIdol, quit, stage, total, power, cap, standing, setRNG: f => { RNG = f; } };

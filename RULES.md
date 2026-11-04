@@ -4,6 +4,7 @@
 - 12-card decks. 6 turns (7 if The Outback is in play). 3 locations, revealed on turns 1, 2, 3.
 - Fire (energy) = turn number, plus any extra fire from cards or locations. Start with 3 cards, draw 1 each turn (hand max 7).
 - Both players play secretly; the player winning more locations reveals first.
+- Face-down cards (The Urn, Natalie White) hold a space but add no influence and cannot be targeted until the game ends; then they flip in play order before the winner is decided.
 - Max 4 cards per side at a location. Win 2 of 3 locations; total influence breaks a split.
 - Stakes start at 1 jury vote. Playing your idol doubles them from next turn; the final turn (6, or 7) doubles them again. Quitting loses the current stakes only.
 - Ranks: Castaway 0, Swing Vote 10, Merged 25, Juror 45, Finalist 70, Sole Survivor 100.
@@ -18,7 +19,7 @@
 - Each owned card records a count and a variants list, ready for rare variants later.
 - Art is shared by everyone; only editors of the artifact can upload it. Collections are per person (account when available, otherwise device).
 
-## Cards (73)
+## Cards (74)
 The full card list with design notes and change log is the site's cards.html page.
 
 | Card | Tier | Cost | Influence | Ability type | Ability |
@@ -77,6 +78,7 @@ The full card list with design notes and change log is the site's cards.html pag
 | James Clement | Day One | 3 | 5 | Ongoing | Ongoing: Hidden idols don't protect him. While holding one, +3 influence. |
 | Wendell Holland | Day One | 3 | 3 | Start of Turn | Start of Turn: You get +1 fire this turn. |
 | Elisabeth Hasselbeck | Day One | 3 | 4 | On Reveal | On Reveal: This location becomes The Outback. |
+| Natalie White | Day One | 3 | 4 | Ongoing | Ongoing: Cards played here after this stay face-down until the game ends. |
 | Joe Anglim (starter) | Day One | 4 | 6 | No ability | No ability. |
 | Colby Donaldson | Day One | 4 | 7 | Ongoing | Ongoing: Your other cards here have -1 influence. |
 | Ben Driebergen | Day One | 4 | 4 | Ongoing | Ongoing: +5 influence at Tribal Council or Fire-Making. |
@@ -112,6 +114,7 @@ The full card list with design notes and change log is the site's cards.html pag
 - **Island of the Idols**: End of each turn: cards here get +1 influence.
 - **Flint Reward**: Each card you play here gives you +1 fire next turn.
 - **The Outback**: When revealed, the game lasts 7 turns.
+- **The Urn**: Cards played here stay face-down until the game ends.
 
 ## Bot tribes
 - **Tagi** (Alliance): cochran, maryanne, parvati, tony, reward, yamyam, rob, hatch, joe, cirie, kim, westman

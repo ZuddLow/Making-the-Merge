@@ -185,6 +185,11 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .loc.new { animation: glow 1.2s ease-out; }
 @keyframes glow { from { box-shadow: 0 0 0 2px var(--torch), 0 0 30px rgba(243,162,60,.6); } to { box-shadow: none; } }
 .tot { position: absolute; left: 50%; translate: -50% 0; min-width: 28px; height: 22px; border-radius: 11px; background: var(--bark); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 14px; padding: 0 6px; box-sizing: border-box; }
+.tot i { font-style: normal; font-size: 11px; opacity: .8; margin-left: 2px; }
+.tot { white-space: nowrap; display: inline-flex !important; align-items: center; justify-content: center; }
+.card.hidmine { filter: brightness(.5) saturate(.4); box-shadow: inset 0 0 0 2px rgba(147,182,220,.7); }
+.card.hidmine::after { content: "Hidden"; position: absolute; left: 0; right: 0; top: 42%; text-align: center; font: 700 9px var(--body); letter-spacing: .12em; text-transform: uppercase; color: #dbe8f5; text-shadow: 0 1px 2px #000; filter: brightness(2); }
+.card.back.hidback { box-shadow: inset 0 0 0 2px rgba(147,182,220,.6); }
 .tot.t { top: -11px; color: var(--them); } .tot.y { bottom: -11px; }
 .tot.win { background: var(--torch); color: #2a1503; border-color: transparent; box-shadow: 0 0 12px rgba(243,162,60,.6); }
 .tot.t.win { background: var(--them); color: #0d1a29; box-shadow: 0 0 12px rgba(147,182,220,.5); }
@@ -594,6 +599,7 @@ const CARDS = [
   { id: 'flint', name: 'Flint', short: 'Flint', cost: 1, power: 0, arch: 'event', type: 'event', text: 'Scenario: You get +1 fire every turn for the rest of the game.' },
   { id: 'elisabeth', name: 'Elisabeth Hasselbeck', short: 'Elisabeth', cost: 3, power: 4, arch: 'strat', text: 'On Reveal: This location becomes The Outback.' },
   { id: 'holloway', name: 'Mike Holloway', short: 'Holloway', cost: 7, power: 13, arch: 'beast', text: 'No ability.' },
+  { id: 'nwhite', name: 'Natalie White', short: 'Natalie W.', cost: 3, power: 4, arch: 'strat', text: 'Ongoing: Cards played here after this stay face-down until the game ends.' },
   { id: 'fakeidol', name: 'Fake Idol', short: 'Fake Idol', cost: 1, power: 0, arch: 'event', type: 'event', token: true, text: 'Scenario: Does nothing. Bob made it out of a stick.' },
   { id: 'goat', name: 'Goat', short: 'Goat', cost: 0, power: 0, arch: 'goat', token: true, text: 'Takes up a spot. Does nothing.' }
 ];
@@ -601,7 +607,7 @@ const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
 // Ability types. Cards that fire when something happens keep the 'reaction' label.
 const KW = { reveal: 'On Reveal', ongoing: 'Ongoing', start: 'Start of Turn', end: 'End of Turn', objective: 'Objective', reaction: 'Reaction', none: 'No ability' };
 const CARD_KW = {
-  ongoing: ['erik', 'parvati', 'sandra', 'ozzy', 'rob', 'jeremy', 'hatch', 'kim', 'amber', 'tina', 'michele', 'colby', 'ben', 'earl', 'rudy', 'ethan', 'yul', 'dreamz', 'james', 'steph'],
+  ongoing: ['erik', 'parvati', 'sandra', 'ozzy', 'rob', 'jeremy', 'hatch', 'kim', 'amber', 'tina', 'michele', 'colby', 'ben', 'earl', 'rudy', 'ethan', 'yul', 'dreamz', 'james', 'steph', 'nwhite'],
   reaction: ['natalie', 'rick', 'spencer'],
   end: ['tyson', 'ian'],
   none: ['joe', 'westman', 'holloway', 'goat'],
@@ -623,7 +629,8 @@ const LOCS = [
   { id: 'camp', name: 'Day 1 Camp', text: 'No effect. Build a shelter.' },
   { id: 'island', name: 'Island of the Idols', text: 'End of each turn: cards here get +1 influence.' },
   { id: 'flintreward', name: 'Flint Reward', text: 'Each card you play here gives you +1 fire next turn.' },
-  { id: 'outback', name: 'The Outback', text: 'When revealed, the game lasts 7 turns.' }
+  { id: 'outback', name: 'The Outback', text: 'When revealed, the game lasts 7 turns.' },
+  { id: 'urn', name: 'The Urn', text: 'Cards played here stay face-down until the game ends.' }
 ];
 const LOC = Object.fromEntries(LOCS.map(l => [l.id, l]));
 
@@ -650,7 +657,7 @@ const CARD_TIER = {
   kelly: 1, phillip: 1, wade: 1,
   necklace: 1, shotdark: 1, nullifier: 1, extravote: 1, doordie: 1,
   rudy: 1, ethan: 1, lex: 1, vecepia: 1, robc: 1, chrisd: 1, terry: 1, yul: 1, yauman: 1, dreamz: 1, james: 1, bob: 1, steph: 1, ian: 1,
-  tai: 1, wendell: 1, flint: 1, elisabeth: 1, holloway: 1
+  tai: 1, wendell: 1, flint: 1, elisabeth: 1, holloway: 1, nwhite: 1
 };
 
 let RNG = Math.random;
@@ -665,8 +672,8 @@ function emit(g, ev) { g.events.push(ev); }
 
 function newGame(deck0, deck1) {
   const g = { turn: 0, uid: 1, locs: [], players: [], votedOut: 0, stakes: 1, pending: 1, idol: [false, false],
-    events: [], over: false, result: null, turnPlays: [[], []], outBy: [0, 0], gone: [], lastTurn: 6, finalDoubled: false };
-  g.locs = shuffle(LOCS.map(l => l.id)).slice(0, 3).map(id => ({ id, revealed: false, sides: [[], []], idolGiven: [false, false] }));
+    events: [], over: false, result: null, turnPlays: [[], []], outBy: [0, 0], gone: [], lastTurn: 6, finalDoubled: false, seq: 0 };
+  g.locs = shuffle(LOCS.map(l => l.id)).slice(0, 3).map(id => ({ id, revealed: false, sides: [[], []], hid: [[], []], idolGiven: [false, false] }));
   [deck0, deck1].forEach((d, p) => {
     g.players.push({ deck: shuffle(d.map(id => mk(g, id, p))), hand: [], staged: [], energy: 0, played: 0, events: 0, kellyArm: false, fireNext: 0, fireAlways: 0 });
   });
@@ -679,10 +686,13 @@ function draw(g, p, n = 1) {
   for (let i = 0; i < n; i++) { if (!P.deck.length || P.hand.length >= 7) return; P.hand.push(P.deck.pop()); }
 }
 
+// Face-down cards (The Urn, Natalie White) sit in L.hid until the game ends: they hold a space but don't count yet.
+function occ(L, p) { return L.sides[p].length + (L.hid ? L.hid[p].length : 0); }
+const hidesAt = L => (L.revealed && L.id === 'urn') || L.sides.some(sd => sd.some(o => o.id === 'nwhite'));
 function cap(L) { if (L.revealed) { if (L.id === 'exile') return 1; if (L.id === 'fire') return 2; } return 4; }
 function space(g, li, p) {
   const L = g.locs[li];
-  return cap(L) - L.sides[p].length - g.players[p].staged.filter(s => s.loc === li).length;
+  return cap(L) - occ(L, p) - g.players[p].staged.filter(s => s.loc === li).length;
 }
 function fireLeft(g, p) { const P = g.players[p]; return P.energy - P.staged.reduce((s, x) => s + CARD[x.card.id].cost, 0); }
 function canStage(g, p, card, li) { return CARD[card.id].cost <= fireLeft(g, p) && space(g, li, p) > 0; }
@@ -779,11 +789,11 @@ function voteOut(g, c) {
   emit(g, { t: 'out', uid: c.uid, id: c.id, owner: c.owner });
   g.locs.forEach(M => M.sides[c.owner].forEach(o => { if (o.id === 'natalie') o.perm += 3; }));
   if (c.id === 'rick') {
-    const d = [0, 1, 2].filter(i => g.locs[i].sides[c.owner].length < cap(g.locs[i]));
+    const d = [0, 1, 2].filter(i => occ(g.locs[i], c.owner) < cap(g.locs[i]));
     if (d.length) { c.perm += 3; place(g, c, pick(d), c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'back', uid: c.uid, id: c.id }); }
   } else {
     const ei = g.locs.findIndex(M => M.revealed && M.id === 'edge');
-    if (ei >= 0 && ei !== from && g.locs[ei].sides[c.owner].length < cap(g.locs[ei])) { place(g, c, ei, c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'edge', uid: c.uid, id: c.id }); }
+    if (ei >= 0 && ei !== from && occ(g.locs[ei], c.owner) < cap(g.locs[ei])) { place(g, c, ei, c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'edge', uid: c.uid, id: c.id }); }
   }
   return true;
 }
@@ -805,9 +815,9 @@ function playEffects(g, c, li, p) {
     case 'russell': g.locs.forEach(M => { const b = maxBy(M.sides[p], o => power(g, o)); if (b) b.idol = true; }); emit(g, { t: 'russell' }); break;
     case 'kass': { let n = 0; for (const o of L.sides[p].filter(o => o !== c)) if (voteOut(g, o)) n++; c.perm += 3 * n; break; }
     case 'yamyam': L.sides[p].forEach(o => { if (o !== c) o.perm += 1; }); break;
-    case 'brian': g.locs.forEach((M, mi) => { if (mi !== li && M.sides[op].length < cap(M)) place(g, mk(g, 'goat', op), mi, op); }); emit(g, { t: 'goats' }); break;
+    case 'brian': g.locs.forEach((M, mi) => { if (mi !== li && occ(M, op) < cap(M)) place(g, mk(g, 'goat', op), mi, op); }); emit(g, { t: 'goats' }); break;
     case 'cirie': {
-      if (isImmunity(L) || L.sides[p].length >= cap(L)) break;
+      if (isImmunity(L) || occ(L, p) >= cap(L)) break;
       const t = minBy(L.sides[op].filter(o => power(g, o) <= 3 && !fixedCard(o)), o => power(g, o));
       if (t) { removeFrom(g, t); place(g, t, li, p); emit(g, { t: 'flip', uid: t.uid, id: t.id }); }
       break;
@@ -823,7 +833,7 @@ function playEffects(g, c, li, p) {
       break;
     case 'reward': L.sides[p].forEach(o => { if (o !== c) o.perm += 2; }); break;
     case 'wade': {
-      if (L.sides[p].length >= cap(L)) break;
+      if (occ(L, p) >= cap(L)) break;
       const cands = [];
       g.locs.forEach((M, mi) => { if (mi !== li && !isImmunity(M)) M.sides[p].forEach(o => { if (!fixedCard(o)) cands.push(o); }); });
       const t = maxBy(cands, o => power(g, o));
@@ -832,7 +842,7 @@ function playEffects(g, c, li, p) {
     }
     case 'lex': {
       c.perm += 3;
-      if (isImmunity(L) || L.sides[op].length >= cap(L)) break;
+      if (isImmunity(L) || occ(L, op) >= cap(L)) break;
       const t = minBy(L.sides[p].filter(o => o !== c && !fixedCard(o)), o => power(g, o));
       if (t) { removeFrom(g, t); place(g, t, li, op); emit(g, { t: 'lex', uid: t.uid, id: t.id }); }
       break;
@@ -850,11 +860,11 @@ function playEffects(g, c, li, p) {
       break;
     case 'bob': { const H = g.players[op].hand; if (H.length < 7) { H.push(mk(g, 'fakeidol', op)); emit(g, { t: 'fakeidol', owner: op }); } break; }
     case 'phillip':
-      if (L.sides[op].length < cap(L)) { removeFrom(g, c); place(g, c, li, op); emit(g, { t: 'mole', uid: c.uid, id: c.id }); }
+      if (occ(L, op) < cap(L)) { removeFrom(g, c); place(g, c, li, op); emit(g, { t: 'mole', uid: c.uid, id: c.id }); }
       break;
     case 'carolyn': {
       if (isImmunity(L)) break;
-      const d = [0, 1, 2].filter(i => i !== li && g.locs[i].sides[p].length < cap(g.locs[i]));
+      const d = [0, 1, 2].filter(i => i !== li && occ(g.locs[i], p) < cap(g.locs[i]));
       if (d.length) { removeFrom(g, c); place(g, c, pick(d), p); c.perm += 2; emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
       break;
     }
@@ -877,7 +887,7 @@ function playEffects(g, c, li, p) {
     case 'tribeswap': {
       if (isImmunity(L)) break;
       const t = maxBy(L.sides[op].filter(o => !fixedCard(o)), o => power(g, o)); if (!t) break;
-      const d = [0, 1, 2].filter(i => i !== li && g.locs[i].sides[op].length < cap(g.locs[i]));
+      const d = [0, 1, 2].filter(i => i !== li && occ(g.locs[i], op) < cap(g.locs[i]));
       if (d.length) { removeFrom(g, t); place(g, t, pick(d), op); emit(g, { t: 'moved', uid: t.uid, id: t.id }); }
       break;
     }
@@ -889,7 +899,7 @@ function playEffects(g, c, li, p) {
   else if (P.kellyArm && def.type !== 'event' && c.loc >= 0 && c.owner === p) {
     P.kellyArm = false;
     const from = g.locs[c.loc], to = c.loc - 1, T = g.locs[to];
-    if (to >= 0 && !fixedCard(c) && !isImmunity(from) && T.sides[p].length < cap(T)) { removeFrom(g, c); place(g, c, to, p); emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
+    if (to >= 0 && !fixedCard(c) && !isImmunity(from) && occ(T, p) < cap(T)) { removeFrom(g, c); place(g, c, to, p); emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
   }
   if (def.type === 'event' && c.loc >= 0) { removeFrom(g, c); g.gone.push({ uid: c.uid, id: c.id, owner: p, turn: g.turn, why: 'scenario' }); }
 }
@@ -905,8 +915,14 @@ function* resolveTurn(g) {
     while (P.staged.length) {
       const { card, loc } = P.staged.shift();
       const L = g.locs[loc];
-      if (L.sides[p].length >= cap(L)) { if (P.hand.length < 7) P.hand.push(card); else P.deck.unshift(card); emit(g, { t: 'nofit', uid: card.uid, id: card.id, owner: p }); continue; }
-      place(g, card, loc, p); card.turn = g.turn;
+      if (occ(L, p) >= cap(L)) { if (P.hand.length < 7) P.hand.push(card); else P.deck.unshift(card); emit(g, { t: 'nofit', uid: card.uid, id: card.id, owner: p }); continue; }
+      if (hidesAt(L)) {
+        card.owner = p; card.loc = loc; card.turn = g.turn; card.seq = g.seq++;
+        L.hid[p].push(card); P.played++; if (CARD[card.id].type === 'event') P.events++;
+        yield { t: 'hide', uid: card.uid, id: card.id, loc, owner: p };
+        continue;
+      }
+      place(g, card, loc, p); card.turn = g.turn; card.seq = g.seq++;
       P.played++; if (CARD[card.id].type === 'event') P.events++;
       yield { t: 'reveal', uid: card.uid };
       playEffects(g, card, loc, p);
@@ -937,6 +953,7 @@ function* endOfTurn(g) {
     const ns = [L.sides[1].filter(c => !fixedCard(c)).concat(stay[0]), L.sides[0].filter(c => !fixedCard(c)).concat(stay[1])];
     L.sides = ns[0].length <= cap(L) && ns[1].length <= cap(L) ? ns : [L.sides[1], L.sides[0]]; // no room to stay put: Rudy swaps too
     L.sides.forEach((s, p) => s.forEach(c => { c.owner = p; }));
+    L.hid = [L.hid[1], L.hid[0]]; L.hid.forEach((s, p) => s.forEach(c => { c.owner = p; }));
     emit(g, { t: 'swap' }); yield { t: 'swap' };
   }
   for (const [li, L] of g.locs.entries()) for (const p of [0, 1]) for (const c of [...L.sides[p]]) {
@@ -948,6 +965,19 @@ function* endOfTurn(g) {
     }
   }
   if (g.turn >= g.lastTurn) {
+    // The votes are read: face-down cards flip in the order they were played
+    const pend = [];
+    g.locs.forEach((L, li) => [0, 1].forEach(p => L.hid[p].forEach(c => pend.push({ c, li }))));
+    if (pend.length) { emit(g, { t: 'urnreveal', n: pend.length }); yield { t: 'urn' }; }
+    pend.sort((a, b) => a.c.seq - b.c.seq);
+    for (const { c, li } of pend) {
+      const L = g.locs[li], p = c.owner;
+      L.hid[p].splice(L.hid[p].indexOf(c), 1);
+      place(g, c, li, p);
+      yield { t: 'reveal', uid: c.uid };
+      playEffects(g, c, li, p);
+      yield { t: 'after', uid: c.uid };
+    }
     // Objectives are checked at game end, before the winner is decided
     for (const [li, L] of g.locs.entries()) for (const p of [0, 1]) for (const c of L.sides[p]) {
       if (c.id !== 'chrisd') continue;
@@ -976,7 +1006,8 @@ function simEval(g, p, play) {
   const saved = RNG; let seed = 7; RNG = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
   try {
     for (const { card, loc } of list) {
-      const L = h.locs[loc]; if (L.sides[p].length >= cap(L)) continue;
+      const L = h.locs[loc]; if (occ(L, p) >= cap(L)) continue;
+      if (hidesAt(L)) { L.hid[p].push(card); continue; }
       place(h, card, loc, p); card.turn = h.turn; h.players[p].played++; if (CARD[card.id].type === 'event') h.players[p].events++;
       playEffects(h, card, loc, p);
     }
@@ -1003,7 +1034,7 @@ function botWantsIdol(g, p) {
   if (g.idol[p] || g.turn < 3) return false;
   const h = JSON.parse(JSON.stringify({ ...g, events: [] }));
   const list = h.players[p].staged; h.players[p].staged = [];
-  for (const { card, loc } of list) if (h.locs[loc].sides[p].length < cap(h.locs[loc])) place(h, card, loc, p);
+  for (const { card, loc } of list) if (occ(h.locs[loc], p) < cap(h.locs[loc])) place(h, card, loc, p);
   let lead = 0, won = 0;
   h.locs.forEach((L, li) => { const d = total(h, li, p) - total(h, li, 1 - p); if (d > 0) { won++; lead += Math.min(d, 10); } });
   return won >= 2 && lead >= 10 + (g.lastTurn - g.turn) * 2;
@@ -1015,7 +1046,7 @@ function botWantsQuit(g, p) {
   return lost >= 2 && gap >= (g.turn === g.lastTurn ? 12 : 18);
 }
 
-if (typeof module !== 'undefined') module.exports = { KW, TIERS_INFO, CARD_TIER, CARDS, CARD, LOCS, BOTS, STARTER, newGame, startTurn, resolveTurn, botPlan, botWantsIdol, botWantsQuit, playIdol, quit, stage, total, power, cap, standing, setRNG: f => { RNG = f; } };
+if (typeof module !== 'undefined') module.exports = { occ, KW, TIERS_INFO, CARD_TIER, CARDS, CARD, LOCS, BOTS, STARTER, newGame, startTurn, resolveTurn, botPlan, botWantsIdol, botWantsQuit, playIdol, quit, stage, total, power, cap, standing, setRNG: f => { RNG = f; } };
 
 
 // ===== UI =====
@@ -1806,6 +1837,7 @@ function flushEvents() {
       case 'nullified': say('Idol Nullifier: enemy idols are worthless now.'); break;
       case 'dod': say(ev.ok ? `Do or Die: ${who(ev)} survives and gets +6!` : `Do or Die: ${who(ev)} picked the wrong box.`); break;
       case 'tyson': say('Tyson votes himself out.'); break;
+      case 'urnreveal': say(`The votes are read: ${ev.n} face-down card${ev.n > 1 ? 's' : ''} turn over.`); break;
       case 'outback': newLoc = ev.li; say('Elisabeth turns this location into The Outback.'); break;
       case 'extend': say('The game now lasts 7 turns!'); break;
       case 'fire': if (ev.owner === 0) say(ev.always ? 'Flint: +1 fire every turn from now on.' : ev.next ? `${who(ev)}: +${ev.n} fire next turn.` : `${who(ev)}: +${ev.n} fire this turn.`); break;
@@ -1834,8 +1866,9 @@ function render() {
   $('board').innerHTML = G.locs.map((L, li) => {
     const def = LOC[L.id], a = L.revealed ? ART.locs[L.id] : null;
     const t = total(G, li, 1), y = total(G, li, 0);
-    const slot = (side, staged, them) => {
+    const slot = (side, staged, them, hid) => {
       const cards = side.map(c => cardHTML(c, { pow: power(G, c), cls: c.uid === flashUid ? 'flip' : '' }));
+      hid.forEach(c => cards.push(them ? backHTML(G.foeBack, 'hidback') : cardHTML(c, { cls: 'hidmine' })));
       staged.forEach(s => cards.push(them ? backHTML(G.foeBack) : busy ? backHTML(G.myBack) : cardHTML(s.card, { cls: 'staged' })));
       const room = Math.max(cap(L), Math.min(4, cards.length));
       while (cards.length < room) cards.push('<div class="slot"></div>');
@@ -1846,12 +1879,12 @@ function render() {
     const ok = selCard && canStage(G, 0, selCard, li);
     const fin = G.over && G.result.quit < 0 ? (y > t ? 'final-win' : t > y ? 'final-lose' : '') : '';
     return `<div class="lane ${ok ? 'ok' : ''} ${fin}" data-li="${li}" tabindex="0" aria-label="Location ${li + 1}">
-      <div class="slots them ${slotCls(L, 1)}">${slot(L.sides[1], foe.staged.filter(s => s.loc === li), true)}</div>
+      <div class="slots them ${slotCls(L, 1)}">${slot(L.sides[1], foe.staged.filter(s => s.loc === li), true, L.hid[1])}</div>
       <div class="loc ${L.revealed ? '' : 'hidden'} ${newLoc === li ? 'new' : ''} ${hasArt(a) ? 'art' : ''}" data-loc="${li}"${locGameStyle(a)}>
-        <span class="tot t ${t > y ? 'win' : ''}">${t}</span>
+        <span class="tot t ${t > y ? 'win' : ''}">${t}${L.hid[1].length ? '<i>+?</i>' : ''}</span>
         <h3>${L.revealed ? def.name : 'Unrevealed'}</h3><p>${L.revealed ? def.text : `Reveals on turn ${li + 1}.`}</p>
-        <span class="tot y ${y > t ? 'win' : ''}">${y}</span></div>
-      <div class="slots ${slotCls(L, 0)}">${slot(L.sides[0], me.staged.filter(s => s.loc === li), false)}</div></div>`;
+        <span class="tot y ${y > t ? 'win' : ''}">${y}${L.hid[0].length ? '<i>+?</i>' : ''}</span></div>
+      <div class="slots ${slotCls(L, 0)}">${slot(L.sides[0], me.staged.filter(s => s.loc === li), false, L.hid[0])}</div></div>`;
   }).join('');
   newLoc = -1;
   $('hand').innerHTML = renderHand(me.hand);
@@ -1863,7 +1896,7 @@ function render() {
   $('endBtn').disabled = busy;
 }
 // Exile Island (1) and Fire-Making (2) show only the spaces they allow
-function slotCls(L, p) { const n = Math.max(cap(L), Math.min(4, L.sides[p].length + G.players[p].staged.filter(s => G.locs[s.loc] === L).length)); return n === 1 ? 'one' : ''; }
+function slotCls(L, p) { const n = Math.max(cap(L), Math.min(4, occ(L, p) + G.players[p].staged.filter(s => G.locs[s.loc] === L).length)); return n === 1 ? 'one' : ''; }
 // A fanned, centered hand that fits up to 7 cards without scrolling
 function renderHand(hand) {
   const n = hand.length;
@@ -1916,6 +1949,16 @@ async function endTurn() {
       if (anyMine && anyTheirs) toast(step.tie ? `Tied on locations: a coin flip says ${who1} first.` : step.first === 0 ? "You're winning more locations, so you reveal first." : `${BOT.name} is winning more locations, so they reveal first.`);
       else if (!anyMine && !anyTheirs) continue;
       render(); await sleep(anyMine && anyTheirs ? 1500 : 500);
+      continue;
+    }
+    if (step.t === 'hide') {
+      const where = G.locs[step.loc].revealed ? LOC[G.locs[step.loc].id].name : `location ${step.loc + 1}`;
+      const mine = step.owner === 0;
+      logLine(mine ? `You play ${CARD[step.id].name} at ${where}, face-down until the end.` : `${BOT.name} plays a face-down card at ${where}.`, mine ? 'me' : 'them');
+      if (!mine) toast(`${BOT.name} plays a face-down card at ${where}.`);
+      if (mine && G.myDeck.includes(step.id)) G.played0.add(step.id);
+      if (!mine && !CARD[step.id].token) G.played1.add(step.id);
+      render(); await sleep(1100);
       continue;
     }
     if (step.t === 'reveal') {
@@ -2090,6 +2133,7 @@ $('board').addEventListener('click', e => {
   if (cardEl && cardEl.dataset.uid) {
     const uid = +cardEl.dataset.uid;
     for (const L of G.locs) for (const side of L.sides) { const c = side.find(x => x.uid === uid); if (c) { gameQuickView(c, { where: 'board', pow: power(G, c) }); return; } }
+    for (const L of G.locs) { const c = L.hid[0].find(x => x.uid === uid); if (c) { gameQuickView(c, { note: 'Face-down until the end of the game. It adds no influence and its ability waits until then.' }); return; } }
   }
   if (locEl) locQuickView(+locEl.dataset.loc);
 });
@@ -2102,6 +2146,7 @@ $('rulesBtn').onclick = () => {
     <li><b>Drag a card</b> from your hand onto a location to play it. Drag it back down to take it back before you end the turn. <b>Tap any card or location</b> to see it up close.</li>
     <li><b>Win 2 of 3 locations.</b> After the final turn (usually turn 6), whoever has more influence at a location wins it. If you split, total influence breaks the tie.</li>
     <li><b>Fire is your energy.</b> You get 1 fire on turn 1, 2 on turn 2, and so on. Some cards and locations give extra fire. Cards cost fire.</li>
+    <li><b>Face-down cards.</b> Cards played at The Urn, or next to Natalie White, stay face-down until the game ends. They add no influence until then, and nothing can target them. At the end they flip in the order played.</li>
     <li><b>Six turns, sometimes seven.</b> The Outback stretches the game to 7 turns, and Elisabeth Hasselbeck can turn any location into The Outback. Votes double on the final turn either way.</li>
     <li><b>Plays are secret.</b> Both tribes play at the same time. The tribe winning more locations reveals first.</li>
     <li><b>Locations reveal</b> on turns 1, 2 and 3. Each has a twist.</li>

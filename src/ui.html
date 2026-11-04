@@ -170,6 +170,11 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .loc.new { animation: glow 1.2s ease-out; }
 @keyframes glow { from { box-shadow: 0 0 0 2px var(--torch), 0 0 30px rgba(243,162,60,.6); } to { box-shadow: none; } }
 .tot { position: absolute; left: 50%; translate: -50% 0; min-width: 28px; height: 22px; border-radius: 11px; background: var(--bark); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 14px; padding: 0 6px; box-sizing: border-box; }
+.tot i { font-style: normal; font-size: 11px; opacity: .8; margin-left: 2px; }
+.tot { white-space: nowrap; display: inline-flex !important; align-items: center; justify-content: center; }
+.card.hidmine { filter: brightness(.5) saturate(.4); box-shadow: inset 0 0 0 2px rgba(147,182,220,.7); }
+.card.hidmine::after { content: "Hidden"; position: absolute; left: 0; right: 0; top: 42%; text-align: center; font: 700 9px var(--body); letter-spacing: .12em; text-transform: uppercase; color: #dbe8f5; text-shadow: 0 1px 2px #000; filter: brightness(2); }
+.card.back.hidback { box-shadow: inset 0 0 0 2px rgba(147,182,220,.6); }
 .tot.t { top: -11px; color: var(--them); } .tot.y { bottom: -11px; }
 .tot.win { background: var(--torch); color: #2a1503; border-color: transparent; box-shadow: 0 0 12px rgba(243,162,60,.6); }
 .tot.t.win { background: var(--them); color: #0d1a29; box-shadow: 0 0 12px rgba(147,182,220,.5); }
@@ -1277,6 +1282,7 @@ function flushEvents() {
       case 'nullified': say('Idol Nullifier: enemy idols are worthless now.'); break;
       case 'dod': say(ev.ok ? `Do or Die: ${who(ev)} survives and gets +6!` : `Do or Die: ${who(ev)} picked the wrong box.`); break;
       case 'tyson': say('Tyson votes himself out.'); break;
+      case 'urnreveal': say(`The votes are read: ${ev.n} face-down card${ev.n > 1 ? 's' : ''} turn over.`); break;
       case 'outback': newLoc = ev.li; say('Elisabeth turns this location into The Outback.'); break;
       case 'extend': say('The game now lasts 7 turns!'); break;
       case 'fire': if (ev.owner === 0) say(ev.always ? 'Flint: +1 fire every turn from now on.' : ev.next ? `${who(ev)}: +${ev.n} fire next turn.` : `${who(ev)}: +${ev.n} fire this turn.`); break;
@@ -1305,8 +1311,9 @@ function render() {
   $('board').innerHTML = G.locs.map((L, li) => {
     const def = LOC[L.id], a = L.revealed ? ART.locs[L.id] : null;
     const t = total(G, li, 1), y = total(G, li, 0);
-    const slot = (side, staged, them) => {
+    const slot = (side, staged, them, hid) => {
       const cards = side.map(c => cardHTML(c, { pow: power(G, c), cls: c.uid === flashUid ? 'flip' : '' }));
+      hid.forEach(c => cards.push(them ? backHTML(G.foeBack, 'hidback') : cardHTML(c, { cls: 'hidmine' })));
       staged.forEach(s => cards.push(them ? backHTML(G.foeBack) : busy ? backHTML(G.myBack) : cardHTML(s.card, { cls: 'staged' })));
       const room = Math.max(cap(L), Math.min(4, cards.length));
       while (cards.length < room) cards.push('<div class="slot"></div>');
@@ -1317,12 +1324,12 @@ function render() {
     const ok = selCard && canStage(G, 0, selCard, li);
     const fin = G.over && G.result.quit < 0 ? (y > t ? 'final-win' : t > y ? 'final-lose' : '') : '';
     return `<div class="lane ${ok ? 'ok' : ''} ${fin}" data-li="${li}" tabindex="0" aria-label="Location ${li + 1}">
-      <div class="slots them ${slotCls(L, 1)}">${slot(L.sides[1], foe.staged.filter(s => s.loc === li), true)}</div>
+      <div class="slots them ${slotCls(L, 1)}">${slot(L.sides[1], foe.staged.filter(s => s.loc === li), true, L.hid[1])}</div>
       <div class="loc ${L.revealed ? '' : 'hidden'} ${newLoc === li ? 'new' : ''} ${hasArt(a) ? 'art' : ''}" data-loc="${li}"${locGameStyle(a)}>
-        <span class="tot t ${t > y ? 'win' : ''}">${t}</span>
+        <span class="tot t ${t > y ? 'win' : ''}">${t}${L.hid[1].length ? '<i>+?</i>' : ''}</span>
         <h3>${L.revealed ? def.name : 'Unrevealed'}</h3><p>${L.revealed ? def.text : `Reveals on turn ${li + 1}.`}</p>
-        <span class="tot y ${y > t ? 'win' : ''}">${y}</span></div>
-      <div class="slots ${slotCls(L, 0)}">${slot(L.sides[0], me.staged.filter(s => s.loc === li), false)}</div></div>`;
+        <span class="tot y ${y > t ? 'win' : ''}">${y}${L.hid[0].length ? '<i>+?</i>' : ''}</span></div>
+      <div class="slots ${slotCls(L, 0)}">${slot(L.sides[0], me.staged.filter(s => s.loc === li), false, L.hid[0])}</div></div>`;
   }).join('');
   newLoc = -1;
   $('hand').innerHTML = renderHand(me.hand);
@@ -1334,7 +1341,7 @@ function render() {
   $('endBtn').disabled = busy;
 }
 // Exile Island (1) and Fire-Making (2) show only the spaces they allow
-function slotCls(L, p) { const n = Math.max(cap(L), Math.min(4, L.sides[p].length + G.players[p].staged.filter(s => G.locs[s.loc] === L).length)); return n === 1 ? 'one' : ''; }
+function slotCls(L, p) { const n = Math.max(cap(L), Math.min(4, occ(L, p) + G.players[p].staged.filter(s => G.locs[s.loc] === L).length)); return n === 1 ? 'one' : ''; }
 // A fanned, centered hand that fits up to 7 cards without scrolling
 function renderHand(hand) {
   const n = hand.length;
@@ -1387,6 +1394,16 @@ async function endTurn() {
       if (anyMine && anyTheirs) toast(step.tie ? `Tied on locations: a coin flip says ${who1} first.` : step.first === 0 ? "You're winning more locations, so you reveal first." : `${BOT.name} is winning more locations, so they reveal first.`);
       else if (!anyMine && !anyTheirs) continue;
       render(); await sleep(anyMine && anyTheirs ? 1500 : 500);
+      continue;
+    }
+    if (step.t === 'hide') {
+      const where = G.locs[step.loc].revealed ? LOC[G.locs[step.loc].id].name : `location ${step.loc + 1}`;
+      const mine = step.owner === 0;
+      logLine(mine ? `You play ${CARD[step.id].name} at ${where}, face-down until the end.` : `${BOT.name} plays a face-down card at ${where}.`, mine ? 'me' : 'them');
+      if (!mine) toast(`${BOT.name} plays a face-down card at ${where}.`);
+      if (mine && G.myDeck.includes(step.id)) G.played0.add(step.id);
+      if (!mine && !CARD[step.id].token) G.played1.add(step.id);
+      render(); await sleep(1100);
       continue;
     }
     if (step.t === 'reveal') {
@@ -1561,6 +1578,7 @@ $('board').addEventListener('click', e => {
   if (cardEl && cardEl.dataset.uid) {
     const uid = +cardEl.dataset.uid;
     for (const L of G.locs) for (const side of L.sides) { const c = side.find(x => x.uid === uid); if (c) { gameQuickView(c, { where: 'board', pow: power(G, c) }); return; } }
+    for (const L of G.locs) { const c = L.hid[0].find(x => x.uid === uid); if (c) { gameQuickView(c, { note: 'Face-down until the end of the game. It adds no influence and its ability waits until then.' }); return; } }
   }
   if (locEl) locQuickView(+locEl.dataset.loc);
 });
@@ -1573,6 +1591,7 @@ $('rulesBtn').onclick = () => {
     <li><b>Drag a card</b> from your hand onto a location to play it. Drag it back down to take it back before you end the turn. <b>Tap any card or location</b> to see it up close.</li>
     <li><b>Win 2 of 3 locations.</b> After the final turn (usually turn 6), whoever has more influence at a location wins it. If you split, total influence breaks the tie.</li>
     <li><b>Fire is your energy.</b> You get 1 fire on turn 1, 2 on turn 2, and so on. Some cards and locations give extra fire. Cards cost fire.</li>
+    <li><b>Face-down cards.</b> Cards played at The Urn, or next to Natalie White, stay face-down until the game ends. They add no influence until then, and nothing can target them. At the end they flip in the order played.</li>
     <li><b>Six turns, sometimes seven.</b> The Outback stretches the game to 7 turns, and Elisabeth Hasselbeck can turn any location into The Outback. Votes double on the final turn either way.</li>
     <li><b>Plays are secret.</b> Both tribes play at the same time. The tribe winning more locations reveals first.</li>
     <li><b>Locations reveal</b> on turns 1, 2 and 3. Each has a twist.</li>
