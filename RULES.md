@@ -1,11 +1,11 @@
 # Making the Merge: rules and card list (v3)
 
 ## Rules
-- 12-card decks. 6 turns. 3 locations, revealed on turns 1, 2, 3.
-- Fire (energy) = turn number. Start with 3 cards, draw 1 each turn (hand max 7).
+- 12-card decks. 6 turns (7 if The Outback is in play). 3 locations, revealed on turns 1, 2, 3.
+- Fire (energy) = turn number, plus any extra fire from cards or locations. Start with 3 cards, draw 1 each turn (hand max 7).
 - Both players play secretly; the player winning more locations reveals first.
 - Max 4 cards per side at a location. Win 2 of 3 locations; total influence breaks a split.
-- Stakes start at 1 jury vote. Playing your idol doubles them from next turn; the final turn doubles them again. Quitting loses the current stakes only.
+- Stakes start at 1 jury vote. Playing your idol doubles them from next turn; the final turn (6, or 7) doubles them again. Quitting loses the current stakes only.
 - Ranks: Castaway 0, Swing Vote 10, Merged 25, Juror 45, Finalist 70, Sole Survivor 100.
 
 ## Collection
@@ -18,7 +18,7 @@
 - Each owned card records a count and a variants list, ready for rare variants later.
 - Art is shared by everyone; only editors of the artifact can upload it. Collections are per person (account when available, otherwise device).
 
-## Cards (68)
+## Cards (73)
 The full card list with design notes and change log is the site's cards.html page.
 
 | Card | Tier | Cost | Influence | Ability type | Ability |
@@ -36,6 +36,7 @@ The full card list with design notes and change log is the site's cards.html pag
 | Shot in the Dark | Day One | 1 | 0 | On Reveal | Scenario: 1 in 3 chance to give each of your cards here a hidden idol. |
 | Bob Crowley | Day One | 1 | 2 | On Reveal | On Reveal: Put a Fake Idol into your opponent's hand. |
 | Ian Rosenberger | Day One | 1 | 3 | End of Turn | End of Turn: If you lead here by 6 or more, Ian bows out and your other cards here get +2. |
+| Flint | Day One | 1 | 0 | On Reveal | Scenario: You get +1 fire every turn for the rest of the game. |
 | Parvati Shallow (starter) | Day One | 2 | 2 | Ongoing | Ongoing: +3 influence if you have more cards here than your opponent. |
 | Tony Vlachos (starter) | Day One | 2 | 2 | On Reveal | On Reveal: If your opponent played a card here this turn, +3 influence. |
 | Reward Challenge (starter) | Day One | 2 | 0 | On Reveal | Scenario: Your other cards here get +2 influence. |
@@ -53,8 +54,9 @@ The full card list with design notes and change log is the site's cards.html pag
 | Extra Vote | Day One | 2 | 0 | On Reveal | Scenario: Your strongest card here gets +4 influence. |
 | Vecepia Towery | Day One | 2 | 2 | Start of Turn | Start of Turn: +1 influence if this isn't the strongest card here. |
 | Yau-Man Chen | Day One | 2 | 2 | On Reveal | On Reveal: The weakest enemy card here gets +3 influence. Draw 2 cards. |
-| Dreamz Herd | Day One | 2 | 4 | Ongoing | Ongoing: On turn 6, +3 influence and your other cards here have -2. |
+| Dreamz Herd | Day One | 2 | 4 | Ongoing | Ongoing: On the final turn, +3 influence and your other cards here have -2. |
 | Stephenie LaGrossa | Day One | 2 | 2 | Ongoing | Ongoing: +1 influence for each enemy card here. |
+| Tai Trang | Day One | 2 | 2 | On Reveal | On Reveal: Next turn, you get +2 fire. |
 | Ozzy Lusth (starter) | Day One | 3 | 3 | Ongoing | Ongoing: +4 influence if this is your only card here. |
 | Yam Yam Arocho (starter) | Day One | 3 | 3 | On Reveal | On Reveal: Your other cards here get +1 influence. |
 | Brian Heidik | Day One | 3 | 3 | On Reveal | On Reveal: Drag a Goat to the enemy side of each other location. |
@@ -73,6 +75,8 @@ The full card list with design notes and change log is the site's cards.html pag
 | Chris Daugherty | Day One | 3 | 3 | Objective | Objective: At game end, if you're losing here by 4 or less, +5 influence. |
 | Yul Kwon | Day One | 3 | 3 | Ongoing | Ongoing: Your cards holding a hidden idol, anywhere, have +2 influence. |
 | James Clement | Day One | 3 | 5 | Ongoing | Ongoing: Hidden idols don't protect him. While holding one, +3 influence. |
+| Wendell Holland | Day One | 3 | 3 | Start of Turn | Start of Turn: You get +1 fire this turn. |
+| Elisabeth Hasselbeck | Day One | 3 | 4 | On Reveal | On Reveal: This location becomes The Outback. |
 | Joe Anglim (starter) | Day One | 4 | 6 | No ability | No ability. |
 | Colby Donaldson | Day One | 4 | 7 | Ongoing | Ongoing: Your other cards here have -1 influence. |
 | Ben Driebergen | Day One | 4 | 4 | Ongoing | Ongoing: +5 influence at Tribal Council or Fire-Making. |
@@ -81,6 +85,7 @@ The full card list with design notes and change log is the site's cards.html pag
 | Kim Spradlin (starter) | Day One | 5 | 6 | Ongoing | Ongoing: Enemy cards here have -1 influence. |
 | Earl Cole | Day One | 5 | 6 | Ongoing | Ongoing: +4 influence if you're winning both other locations. |
 | Tom Westman (starter) | Day One | 6 | 11 | No ability | No ability. |
+| Mike Holloway | Day One | 7 | 13 | No ability | No ability. |
 | Russell Hantz | Pre-Merge | 2 | 2 | On Reveal | On Reveal: Give a hidden idol to your strongest card at each location. |
 | Kass McQuillen | Pre-Merge | 2 | 2 | On Reveal | On Reveal: Vote out your other cards here. +3 influence for each. |
 | Rock Draw | Pre-Merge | 3 | 0 | On Reveal | Scenario: A random card here, from either side, is voted out. |
@@ -105,11 +110,14 @@ The full card list with design notes and change log is the site's cards.html pag
 - **Fire-Making**: Each player can have only 2 cards here.
 - **Day 1 Camp**: No effect. Build a shelter.
 - **Island of the Idols**: End of each turn: cards here get +1 influence.
+- **Flint Reward**: Each card you play here gives you +1 fire next turn.
+- **The Outback**: When revealed, the game lasts 7 turns.
 
 ## Bot tribes
 - **Tagi** (Alliance): cochran, maryanne, parvati, tony, reward, yamyam, rob, hatch, joe, cirie, kim, westman
 - **Pagong** (Vote Out): natalie, rick, erik, kass, sandra, kim, rocks, brian, blindside, cirie, dee, jeff
 - **Koror** (Idol Hunters): jt, necklace, david, malcolm, extravote, rachel, kenzie, jerri, ben, colby, chris, earl
+- **Chuay Gahn** (Fire Starters): tai, bob, flint, yauman, wendell, elisabeth, yamyam, reward, terry, joe, westman, holloway
 - **Rotu** (Old School): bob, ian, vecepia, steph, yauman, dreamz, chrisd, yul, james, rudy, lex, terry
 - **Ulong** (Idols & Beasts): cochran, erik, maryanne, russell, tony, ozzy, brian, jeremy, joe, kim, dee, westman
 

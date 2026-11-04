@@ -583,11 +583,17 @@ const CARDS = [
   { id: 'terry', name: 'Terry Deitz', short: 'Terry', cost: 4, power: 4, arch: 'beast', text: 'Start of Turn: +1 influence.' },
   { id: 'yul', name: 'Yul Kwon', short: 'Yul', cost: 3, power: 3, arch: 'idol', text: 'Ongoing: Your cards holding a hidden idol, anywhere, have +2 influence.' },
   { id: 'yauman', name: 'Yau-Man Chen', short: 'Yau-Man', cost: 2, power: 2, arch: 'strat', text: "On Reveal: The weakest enemy card here gets +3 influence. Draw 2 cards." },
-  { id: 'dreamz', name: 'Dreamz Herd', short: 'Dreamz', cost: 2, power: 4, arch: 'vote', text: 'Ongoing: On turn 6, +3 influence and your other cards here have -2.' },
+  { id: 'dreamz', name: 'Dreamz Herd', short: 'Dreamz', cost: 2, power: 4, arch: 'vote', text: 'Ongoing: On the final turn, +3 influence and your other cards here have -2.' },
   { id: 'james', name: 'James Clement', short: 'James', cost: 3, power: 5, arch: 'idol', text: "Ongoing: Hidden idols don't protect him. While holding one, +3 influence." },
   { id: 'bob', name: 'Bob Crowley', short: 'Bob', cost: 1, power: 2, arch: 'idol', text: "On Reveal: Put a Fake Idol into your opponent's hand." },
   { id: 'steph', name: 'Stephenie LaGrossa', short: 'Stephenie', cost: 2, power: 2, arch: 'beast', text: 'Ongoing: +1 influence for each enemy card here.' },
   { id: 'ian', name: 'Ian Rosenberger', short: 'Ian', cost: 1, power: 3, arch: 'alliance', text: 'End of Turn: If you lead here by 6 or more, Ian bows out and your other cards here get +2.' },
+  // ---- Batch 5: fire and turn 7 ----
+  { id: 'tai', name: 'Tai Trang', short: 'Tai', cost: 2, power: 2, arch: 'alliance', text: 'On Reveal: Next turn, you get +2 fire.' },
+  { id: 'wendell', name: 'Wendell Holland', short: 'Wendell', cost: 3, power: 3, arch: 'strat', text: 'Start of Turn: You get +1 fire this turn.' },
+  { id: 'flint', name: 'Flint', short: 'Flint', cost: 1, power: 0, arch: 'event', type: 'event', text: 'Scenario: You get +1 fire every turn for the rest of the game.' },
+  { id: 'elisabeth', name: 'Elisabeth Hasselbeck', short: 'Elisabeth', cost: 3, power: 4, arch: 'strat', text: 'On Reveal: This location becomes The Outback.' },
+  { id: 'holloway', name: 'Mike Holloway', short: 'Holloway', cost: 7, power: 13, arch: 'beast', text: 'No ability.' },
   { id: 'fakeidol', name: 'Fake Idol', short: 'Fake Idol', cost: 1, power: 0, arch: 'event', type: 'event', token: true, text: 'Scenario: Does nothing. Bob made it out of a stick.' },
   { id: 'goat', name: 'Goat', short: 'Goat', cost: 0, power: 0, arch: 'goat', token: true, text: 'Takes up a spot. Does nothing.' }
 ];
@@ -598,8 +604,8 @@ const CARD_KW = {
   ongoing: ['erik', 'parvati', 'sandra', 'ozzy', 'rob', 'jeremy', 'hatch', 'kim', 'amber', 'tina', 'michele', 'colby', 'ben', 'earl', 'rudy', 'ethan', 'yul', 'dreamz', 'james', 'steph'],
   reaction: ['natalie', 'rick', 'spencer'],
   end: ['tyson', 'ian'],
-  none: ['joe', 'westman', 'goat'],
-  start: ['vecepia', 'terry'], objective: ['chrisd']
+  none: ['joe', 'westman', 'holloway', 'goat'],
+  start: ['vecepia', 'terry', 'wendell'], objective: ['chrisd']
 };
 CARDS.forEach(c => { c.kw = Object.keys(CARD_KW).find(k => CARD_KW[k].includes(c.id)) || 'reveal'; });
 
@@ -615,7 +621,9 @@ const LOCS = [
   { id: 'merge', name: 'The Merge', text: 'When revealed, both players draw 2 cards.' },
   { id: 'fire', name: 'Fire-Making', text: 'Each player can have only 2 cards here.' },
   { id: 'camp', name: 'Day 1 Camp', text: 'No effect. Build a shelter.' },
-  { id: 'island', name: 'Island of the Idols', text: 'End of each turn: cards here get +1 influence.' }
+  { id: 'island', name: 'Island of the Idols', text: 'End of each turn: cards here get +1 influence.' },
+  { id: 'flintreward', name: 'Flint Reward', text: 'Each card you play here gives you +1 fire next turn.' },
+  { id: 'outback', name: 'The Outback', text: 'When revealed, the game lasts 7 turns.' }
 ];
 const LOC = Object.fromEntries(LOCS.map(l => [l.id, l]));
 
@@ -623,6 +631,7 @@ const BOTS = [
   { name: 'Tagi', style: 'Alliance', deck: ['cochran', 'maryanne', 'parvati', 'tony', 'reward', 'yamyam', 'rob', 'hatch', 'joe', 'cirie', 'kim', 'westman'] },
   { name: 'Pagong', style: 'Vote Out', deck: ['natalie', 'rick', 'erik', 'kass', 'sandra', 'kim', 'rocks', 'brian', 'blindside', 'cirie', 'dee', 'jeff'] },
   { name: 'Koror', style: 'Idol Hunters', deck: ['jt', 'necklace', 'david', 'malcolm', 'extravote', 'rachel', 'kenzie', 'jerri', 'ben', 'colby', 'chris', 'earl'] },
+  { name: 'Chuay Gahn', style: 'Fire Starters', deck: ['tai', 'bob', 'flint', 'yauman', 'wendell', 'elisabeth', 'yamyam', 'reward', 'terry', 'joe', 'westman', 'holloway'] },
   { name: 'Rotu', style: 'Old School', deck: ['bob', 'ian', 'vecepia', 'steph', 'yauman', 'dreamz', 'chrisd', 'yul', 'james', 'rudy', 'lex', 'terry'] },
   { name: 'Ulong', style: 'Idols & Beasts', deck: ['cochran', 'erik', 'maryanne', 'russell', 'tony', 'ozzy', 'brian', 'jeremy', 'joe', 'kim', 'dee', 'westman'] }
 ];
@@ -640,7 +649,8 @@ const CARD_TIER = {
   jerri: 1, rupert: 1, sarah: 1, chris: 1, kenzie: 1, rachel: 1, colby: 1, ben: 1, earl: 1,
   kelly: 1, phillip: 1, wade: 1,
   necklace: 1, shotdark: 1, nullifier: 1, extravote: 1, doordie: 1,
-  rudy: 1, ethan: 1, lex: 1, vecepia: 1, robc: 1, chrisd: 1, terry: 1, yul: 1, yauman: 1, dreamz: 1, james: 1, bob: 1, steph: 1, ian: 1
+  rudy: 1, ethan: 1, lex: 1, vecepia: 1, robc: 1, chrisd: 1, terry: 1, yul: 1, yauman: 1, dreamz: 1, james: 1, bob: 1, steph: 1, ian: 1,
+  tai: 1, wendell: 1, flint: 1, elisabeth: 1, holloway: 1
 };
 
 let RNG = Math.random;
@@ -655,10 +665,10 @@ function emit(g, ev) { g.events.push(ev); }
 
 function newGame(deck0, deck1) {
   const g = { turn: 0, uid: 1, locs: [], players: [], votedOut: 0, stakes: 1, pending: 1, idol: [false, false],
-    events: [], over: false, result: null, turnPlays: [[], []], outBy: [0, 0], gone: [] };
+    events: [], over: false, result: null, turnPlays: [[], []], outBy: [0, 0], gone: [], lastTurn: 6, finalDoubled: false };
   g.locs = shuffle(LOCS.map(l => l.id)).slice(0, 3).map(id => ({ id, revealed: false, sides: [[], []], idolGiven: [false, false] }));
   [deck0, deck1].forEach((d, p) => {
-    g.players.push({ deck: shuffle(d.map(id => mk(g, id, p))), hand: [], staged: [], energy: 0, played: 0, events: 0, kellyArm: false });
+    g.players.push({ deck: shuffle(d.map(id => mk(g, id, p))), hand: [], staged: [], energy: 0, played: 0, events: 0, kellyArm: false, fireNext: 0, fireAlways: 0 });
   });
   for (let p = 0; p < 2; p++) draw(g, p, 3);
   return g;
@@ -707,7 +717,7 @@ function power(g, c) {
   if (c.id === 'steph') v += theirs.length;
   if (c.id === 'james' && c.idol) v += 3;
   if (c.idol && g.locs.some(M => M.sides[c.owner].some(o => o.id === 'yul'))) v += 2;
-  if (g.turn === 6) { if (c.id === 'dreamz') v += 3; for (const o of mine) if (o !== c && o.id === 'dreamz') v -= 2; }
+  if (g.turn === g.lastTurn) { if (c.id === 'dreamz') v += 3; for (const o of mine) if (o !== c && o.id === 'dreamz') v -= 2; }
   if (c.id === 'parvati' && mine.length > theirs.length) v += 3;
   if (c.id === 'sandra') v += g.votedOut;
   if (c.id === 'ozzy' && mine.length === 1) v += 4;
@@ -734,24 +744,27 @@ const isImmunity = L => L.revealed && L.id === 'immunity';
 function revealLoc(g, li) {
   const L = g.locs[li]; L.revealed = true; emit(g, { t: 'loc', li });
   if (L.id === 'merge') { draw(g, 0, 2); draw(g, 1, 2); }
+  if (L.id === 'outback') extendGame(g);
 }
 
 function startTurn(g) {
   g.turn++;
-  if (g.turn === 6) g.pending *= 2;
-  g.stakes = g.pending;
   if (g.turn <= 3) revealLoc(g, g.turn - 1);
-  for (let p = 0; p < 2; p++) { draw(g, p); g.players[p].energy = g.turn; }
+  if (g.turn === g.lastTurn && !g.finalDoubled) { g.pending *= 2; g.finalDoubled = true; } // votes double on the final turn
+  g.stakes = g.pending;
+  for (let p = 0; p < 2; p++) { const P = g.players[p]; draw(g, p); P.energy = g.turn + P.fireAlways + P.fireNext; P.fireNext = 0; }
   // Start of Turn abilities, for cards already on the board
   g.locs.forEach(L => {
     const all = [...L.sides[0], ...L.sides[1]];
     for (const c of all) {
       if (c.id === 'terry') { c.perm += 1; emit(g, { t: 'sot', id: c.id }); }
+      if (c.id === 'wendell') { g.players[c.owner].energy += 1; emit(g, { t: 'fire', owner: c.owner, n: 1, id: c.id }); }
       if (c.id === 'vecepia') { const top = Math.max(...all.map(o => power(g, o))); if (power(g, c) < top) { c.perm += 1; emit(g, { t: 'sot', id: c.id }); } }
     }
   });
 }
 
+function extendGame(g) { if (g.lastTurn < 7) { g.lastTurn = 7; emit(g, { t: 'extend' }); } }
 function playIdol(g, p) { if (g.over || g.idol[p]) return false; g.idol[p] = true; g.pending *= 2; return true; }
 function quit(g, p) { g.over = true; g.result = { winner: 1 - p, stakes: g.stakes, quit: p }; }
 
@@ -779,6 +792,7 @@ function playEffects(g, c, li, p) {
   const L = g.locs[li], def = CARD[c.id], op = 1 - p;
   if (L.revealed) {
     if (L.id === 'loved') draw(g, p);
+    if (L.id === 'flintreward') g.players[p].fireNext += 1;
     if (def.type !== 'event') {
       if (L.id === 'feast') c.perm += 2;
       if (L.id === 'idolspot' && !L.idolGiven[p]) { L.idolGiven[p] = true; c.idol = true; emit(g, { t: 'gotidol', uid: c.uid, id: c.id }); }
@@ -829,6 +843,11 @@ function playEffects(g, c, li, p) {
       break;
     }
     case 'yauman': { const t = minBy(L.sides[op], o => power(g, o)); if (t) t.perm += 3; draw(g, p, 2); break; }
+    case 'tai': g.players[p].fireNext += 2; emit(g, { t: 'fire', owner: p, n: 2, id: c.id, next: true }); break;
+    case 'flint': g.players[p].fireAlways += 1; emit(g, { t: 'fire', owner: p, n: 1, id: c.id, always: true }); break;
+    case 'elisabeth':
+      if (L.id !== 'outback') { L.id = 'outback'; L.revealed = true; emit(g, { t: 'outback', li }); extendGame(g); }
+      break;
     case 'bob': { const H = g.players[op].hand; if (H.length < 7) { H.push(mk(g, 'fakeidol', op)); emit(g, { t: 'fakeidol', owner: op }); } break; }
     case 'phillip':
       if (L.sides[op].length < cap(L)) { removeFrom(g, c); place(g, c, li, op); emit(g, { t: 'mole', uid: c.uid, id: c.id }); }
@@ -928,7 +947,7 @@ function* endOfTurn(g) {
       emit(g, { t: 'ian', id: c.id }); yield { t: 'ian' };
     }
   }
-  if (g.turn >= 6) {
+  if (g.turn >= g.lastTurn) {
     // Objectives are checked at game end, before the winner is decided
     for (const [li, L] of g.locs.entries()) for (const p of [0, 1]) for (const c of L.sides[p]) {
       if (c.id !== 'chrisd') continue;
@@ -987,13 +1006,13 @@ function botWantsIdol(g, p) {
   for (const { card, loc } of list) if (h.locs[loc].sides[p].length < cap(h.locs[loc])) place(h, card, loc, p);
   let lead = 0, won = 0;
   h.locs.forEach((L, li) => { const d = total(h, li, p) - total(h, li, 1 - p); if (d > 0) { won++; lead += Math.min(d, 10); } });
-  return won >= 2 && lead >= 10 + (6 - g.turn) * 2;
+  return won >= 2 && lead >= 10 + (g.lastTurn - g.turn) * 2;
 }
 function botWantsQuit(g, p) {
   if (g.turn < 5 || g.stakes < 2) return false;
   let lost = 0, gap = 0;
   g.locs.forEach((L, li) => { const d = total(g, li, 1 - p) - total(g, li, p); if (d > 0) { lost++; gap += d; } });
-  return lost >= 2 && gap >= (g.turn === 6 ? 12 : 18);
+  return lost >= 2 && gap >= (g.turn === g.lastTurn ? 12 : 18);
 }
 
 if (typeof module !== 'undefined') module.exports = { KW, TIERS_INFO, CARD_TIER, CARDS, CARD, LOCS, BOTS, STARTER, newGame, startTurn, resolveTurn, botPlan, botWantsIdol, botWantsQuit, playIdol, quit, stage, total, power, cap, standing, setRNG: f => { RNG = f; } };
@@ -1004,7 +1023,7 @@ const $ = id => document.getElementById(id);
 const RANKS = [[0, 'Castaway'], [10, 'Swing Vote'], [25, 'Merged'], [45, 'Juror'], [70, 'Finalist'], [100, 'Sole Survivor']];
 const MAX_DECKS = 10;
 const BACKS = [{ id: 'torch', name: 'Torch Night' }, { id: 'bamboo', name: 'Bamboo' }, { id: 'buff', name: 'Tribe Buff' }, { id: 'parchment', name: 'Parchment' }, { id: 'idol', name: 'Hidden Idol' }];
-const BOT_BACK = { Tagi: 'buff', Pagong: 'bamboo', Koror: 'idol', Ulong: 'parchment', Rotu: 'torch' };
+const BOT_BACK = { Tagi: 'buff', Pagong: 'bamboo', Koror: 'idol', Ulong: 'parchment', Rotu: 'torch', 'Chuay Gahn': 'bamboo' };
 const okBack = b => BACKS.some(x => x.id === b);
 const backName = b => (BACKS.find(x => x.id === b) || BACKS[0]).name;
 const backHTML = (b, cls = '') => `<div class="card back bk-${okBack(b) ? b : 'torch'} ${cls}"></div>`;
@@ -1787,6 +1806,9 @@ function flushEvents() {
       case 'nullified': say('Idol Nullifier: enemy idols are worthless now.'); break;
       case 'dod': say(ev.ok ? `Do or Die: ${who(ev)} survives and gets +6!` : `Do or Die: ${who(ev)} picked the wrong box.`); break;
       case 'tyson': say('Tyson votes himself out.'); break;
+      case 'outback': newLoc = ev.li; say('Elisabeth turns this location into The Outback.'); break;
+      case 'extend': say('The game now lasts 7 turns!'); break;
+      case 'fire': if (ev.owner === 0) say(ev.always ? 'Flint: +1 fire every turn from now on.' : ev.next ? `${who(ev)}: +${ev.n} fire next turn.` : `${who(ev)}: +${ev.n} fire this turn.`); break;
       case 'mole': say(`${who(ev)} slips over to the other side.`); break;
       case 'lex': say(`Lex blindsides his ally: ${who(ev)} switches sides.`); break;
       case 'robc': say(`Rob C. flips the vote: ${CARD[ev.id].short} and ${CARD[ev.id2].short} swap influence.`); break;
@@ -1837,7 +1859,7 @@ function render() {
   $('fire').setAttribute('aria-label', `${fireLeft(G, 0)} of ${me.energy} fire left`);
   $('idolBtn').innerHTML = G.idol[0] ? 'Idol played' : 'Play idol<small>double votes</small>';
   $('idolBtn').disabled = G.idol[0] || busy || G.over;
-  $('endBtn').innerHTML = G.over ? `See results<small>${G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>Turn ${G.turn} of 6</small>`;
+  $('endBtn').innerHTML = G.over ? `See results<small>${G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>Turn ${G.turn} of ${G.lastTurn}</small>`;
   $('endBtn').disabled = busy;
 }
 // Exile Island (1) and Fire-Making (2) show only the spaces they allow
@@ -1875,7 +1897,8 @@ function startMatch() {
 function beginTurn() {
   startTurn(G);
   if (G.recap) G.recap = G.recap.filter(x => x.lines.length);
-  if (G.turn === 6) toast('Final turn. The votes are doubled.');
+  if (G.turn === G.lastTurn) toast('Final turn. The votes are doubled.');
+  else if (G.players[0].energy > G.turn) toast(`You have ${G.players[0].energy} fire this turn.`);
   flushEvents(); sel = null; defaultDetail(); render();
   if (botWantsQuit(G, 1)) { quit(G, 1); toast(`${BOT.name} quits the game!`); render(); }
 }
@@ -1936,7 +1959,7 @@ function finish() {
   const sub = r.quit >= 0 ? (won ? 'They walked away rather than face the vote.' : 'You walked away before the final vote.') : tie ? 'Nobody wins the jury. No votes change hands.' : won ? 'You carried the vote at the most locations.' : `${BOT.name} carried the vote at the most locations.`;
   const rows = G.locs.map((L, li) => `<div class="sumrow"><span>${L.revealed ? LOC[L.id].name : 'Unrevealed'}</span><span class="y">${total(G, li, 0)}</span><span class="t">${total(G, li, 1)}</span></div>`).join('');
   $('panel').className = 'panel ' + (won ? 'win' : '');
-  $('panel').innerHTML = `<div class="eyebrow">Turn ${G.turn} of 6</div><h2>${title}</h2><p>${sub}</p>
+  $('panel').innerHTML = `<div class="eyebrow">Turn ${G.turn} of ${G.lastTurn}</div><h2>${title}</h2><p>${sub}</p>
     <div class="delta ${delta > 0 ? 'plus' : delta < 0 ? 'minus' : ''}">${delta > 0 ? '+' : delta < 0 ? '−' : '±'}${Math.abs(delta)} votes</div>
     <div class="earn"><span class="rice"><span class="grain"></span>+${riceGain} rice</span><span>${save.rice} rice total</span></div>
     ${unlocked.map(t => `<p class="unlock"><b>${TIERS_INFO[t].name} unlocked.</b> Those cards can now arrive in Tree Mail.</p>`).join('')}
@@ -1975,7 +1998,7 @@ $('goneBtn').onclick = () => {
 };
 $('playBtn').onclick = startMatch;
 $('endBtn').onclick = () => { if (G && G.over) finish(); else endTurn(); };
-$('idolBtn').onclick = () => { if (!busy && playIdol(G, 0)) { toast(G.turn === 6 ? 'You play your idol. Votes double!' : 'You play your idol. Votes double next turn.'); render(); } };
+$('idolBtn').onclick = () => { if (!busy && playIdol(G, 0)) { toast(G.turn === G.lastTurn ? 'You play your idol. Votes double!' : 'You play your idol. Votes double next turn.'); render(); } };
 $('quitBtn').onclick = () => {
   if (busy || G.over) return;
   if (!quitArmed) { quitArmed = true; render(); setTimeout(() => { if (quitArmed) { quitArmed = false; if (G && !G.over) render(); } }, 3000); return; }
@@ -2077,8 +2100,9 @@ $('rulesBtn').onclick = () => {
   $('panel').innerHTML = `<div class="eyebrow">How to play</div><h2>Outwit, outplay, outlast</h2>
   <ul>
     <li><b>Drag a card</b> from your hand onto a location to play it. Drag it back down to take it back before you end the turn. <b>Tap any card or location</b> to see it up close.</li>
-    <li><b>Win 2 of 3 locations.</b> After turn 6, whoever has more influence at a location wins it. If you split, total influence breaks the tie.</li>
-    <li><b>Fire is your energy.</b> You get 1 fire on turn 1, 2 on turn 2, up to 6. Cards cost fire.</li>
+    <li><b>Win 2 of 3 locations.</b> After the final turn (usually turn 6), whoever has more influence at a location wins it. If you split, total influence breaks the tie.</li>
+    <li><b>Fire is your energy.</b> You get 1 fire on turn 1, 2 on turn 2, and so on. Some cards and locations give extra fire. Cards cost fire.</li>
+    <li><b>Six turns, sometimes seven.</b> The Outback stretches the game to 7 turns, and Elisabeth Hasselbeck can turn any location into The Outback. Votes double on the final turn either way.</li>
     <li><b>Plays are secret.</b> Both tribes play at the same time. The tribe winning more locations reveals first.</li>
     <li><b>Locations reveal</b> on turns 1, 2 and 3. Each has a twist.</li>
     <li><b>Voted out</b> cards leave the game. A hidden idol (gold diamond) saves a card once.</li>

@@ -494,7 +494,7 @@ const $ = id => document.getElementById(id);
 const RANKS = [[0, 'Castaway'], [10, 'Swing Vote'], [25, 'Merged'], [45, 'Juror'], [70, 'Finalist'], [100, 'Sole Survivor']];
 const MAX_DECKS = 10;
 const BACKS = [{ id: 'torch', name: 'Torch Night' }, { id: 'bamboo', name: 'Bamboo' }, { id: 'buff', name: 'Tribe Buff' }, { id: 'parchment', name: 'Parchment' }, { id: 'idol', name: 'Hidden Idol' }];
-const BOT_BACK = { Tagi: 'buff', Pagong: 'bamboo', Koror: 'idol', Ulong: 'parchment', Rotu: 'torch' };
+const BOT_BACK = { Tagi: 'buff', Pagong: 'bamboo', Koror: 'idol', Ulong: 'parchment', Rotu: 'torch', 'Chuay Gahn': 'bamboo' };
 const okBack = b => BACKS.some(x => x.id === b);
 const backName = b => (BACKS.find(x => x.id === b) || BACKS[0]).name;
 const backHTML = (b, cls = '') => `<div class="card back bk-${okBack(b) ? b : 'torch'} ${cls}"></div>`;
@@ -1277,6 +1277,9 @@ function flushEvents() {
       case 'nullified': say('Idol Nullifier: enemy idols are worthless now.'); break;
       case 'dod': say(ev.ok ? `Do or Die: ${who(ev)} survives and gets +6!` : `Do or Die: ${who(ev)} picked the wrong box.`); break;
       case 'tyson': say('Tyson votes himself out.'); break;
+      case 'outback': newLoc = ev.li; say('Elisabeth turns this location into The Outback.'); break;
+      case 'extend': say('The game now lasts 7 turns!'); break;
+      case 'fire': if (ev.owner === 0) say(ev.always ? 'Flint: +1 fire every turn from now on.' : ev.next ? `${who(ev)}: +${ev.n} fire next turn.` : `${who(ev)}: +${ev.n} fire this turn.`); break;
       case 'mole': say(`${who(ev)} slips over to the other side.`); break;
       case 'lex': say(`Lex blindsides his ally: ${who(ev)} switches sides.`); break;
       case 'robc': say(`Rob C. flips the vote: ${CARD[ev.id].short} and ${CARD[ev.id2].short} swap influence.`); break;
@@ -1327,7 +1330,7 @@ function render() {
   $('fire').setAttribute('aria-label', `${fireLeft(G, 0)} of ${me.energy} fire left`);
   $('idolBtn').innerHTML = G.idol[0] ? 'Idol played' : 'Play idol<small>double votes</small>';
   $('idolBtn').disabled = G.idol[0] || busy || G.over;
-  $('endBtn').innerHTML = G.over ? `See results<small>${G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>Turn ${G.turn} of 6</small>`;
+  $('endBtn').innerHTML = G.over ? `See results<small>${G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>Turn ${G.turn} of ${G.lastTurn}</small>`;
   $('endBtn').disabled = busy;
 }
 // Exile Island (1) and Fire-Making (2) show only the spaces they allow
@@ -1365,7 +1368,8 @@ function startMatch() {
 function beginTurn() {
   startTurn(G);
   if (G.recap) G.recap = G.recap.filter(x => x.lines.length);
-  if (G.turn === 6) toast('Final turn. The votes are doubled.');
+  if (G.turn === G.lastTurn) toast('Final turn. The votes are doubled.');
+  else if (G.players[0].energy > G.turn) toast(`You have ${G.players[0].energy} fire this turn.`);
   flushEvents(); sel = null; defaultDetail(); render();
   if (botWantsQuit(G, 1)) { quit(G, 1); toast(`${BOT.name} quits the game!`); render(); }
 }
@@ -1426,7 +1430,7 @@ function finish() {
   const sub = r.quit >= 0 ? (won ? 'They walked away rather than face the vote.' : 'You walked away before the final vote.') : tie ? 'Nobody wins the jury. No votes change hands.' : won ? 'You carried the vote at the most locations.' : `${BOT.name} carried the vote at the most locations.`;
   const rows = G.locs.map((L, li) => `<div class="sumrow"><span>${L.revealed ? LOC[L.id].name : 'Unrevealed'}</span><span class="y">${total(G, li, 0)}</span><span class="t">${total(G, li, 1)}</span></div>`).join('');
   $('panel').className = 'panel ' + (won ? 'win' : '');
-  $('panel').innerHTML = `<div class="eyebrow">Turn ${G.turn} of 6</div><h2>${title}</h2><p>${sub}</p>
+  $('panel').innerHTML = `<div class="eyebrow">Turn ${G.turn} of ${G.lastTurn}</div><h2>${title}</h2><p>${sub}</p>
     <div class="delta ${delta > 0 ? 'plus' : delta < 0 ? 'minus' : ''}">${delta > 0 ? '+' : delta < 0 ? '−' : '±'}${Math.abs(delta)} votes</div>
     <div class="earn"><span class="rice"><span class="grain"></span>+${riceGain} rice</span><span>${save.rice} rice total</span></div>
     ${unlocked.map(t => `<p class="unlock"><b>${TIERS_INFO[t].name} unlocked.</b> Those cards can now arrive in Tree Mail.</p>`).join('')}
@@ -1465,7 +1469,7 @@ $('goneBtn').onclick = () => {
 };
 $('playBtn').onclick = startMatch;
 $('endBtn').onclick = () => { if (G && G.over) finish(); else endTurn(); };
-$('idolBtn').onclick = () => { if (!busy && playIdol(G, 0)) { toast(G.turn === 6 ? 'You play your idol. Votes double!' : 'You play your idol. Votes double next turn.'); render(); } };
+$('idolBtn').onclick = () => { if (!busy && playIdol(G, 0)) { toast(G.turn === G.lastTurn ? 'You play your idol. Votes double!' : 'You play your idol. Votes double next turn.'); render(); } };
 $('quitBtn').onclick = () => {
   if (busy || G.over) return;
   if (!quitArmed) { quitArmed = true; render(); setTimeout(() => { if (quitArmed) { quitArmed = false; if (G && !G.over) render(); } }, 3000); return; }
@@ -1567,8 +1571,9 @@ $('rulesBtn').onclick = () => {
   $('panel').innerHTML = `<div class="eyebrow">How to play</div><h2>Outwit, outplay, outlast</h2>
   <ul>
     <li><b>Drag a card</b> from your hand onto a location to play it. Drag it back down to take it back before you end the turn. <b>Tap any card or location</b> to see it up close.</li>
-    <li><b>Win 2 of 3 locations.</b> After turn 6, whoever has more influence at a location wins it. If you split, total influence breaks the tie.</li>
-    <li><b>Fire is your energy.</b> You get 1 fire on turn 1, 2 on turn 2, up to 6. Cards cost fire.</li>
+    <li><b>Win 2 of 3 locations.</b> After the final turn (usually turn 6), whoever has more influence at a location wins it. If you split, total influence breaks the tie.</li>
+    <li><b>Fire is your energy.</b> You get 1 fire on turn 1, 2 on turn 2, and so on. Some cards and locations give extra fire. Cards cost fire.</li>
+    <li><b>Six turns, sometimes seven.</b> The Outback stretches the game to 7 turns, and Elisabeth Hasselbeck can turn any location into The Outback. Votes double on the final turn either way.</li>
     <li><b>Plays are secret.</b> Both tribes play at the same time. The tribe winning more locations reveals first.</li>
     <li><b>Locations reveal</b> on turns 1, 2 and 3. Each has a twist.</li>
     <li><b>Voted out</b> cards leave the game. A hidden idol (gold diamond) saves a card once.</li>
