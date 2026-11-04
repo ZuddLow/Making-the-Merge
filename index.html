@@ -129,12 +129,30 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .backopt small { color: var(--torch); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; min-height: 12px; }
 
 .card.staged { opacity: .62; outline: 2px dashed var(--torch); outline-offset: -2px; }
-.card.flip { animation: flip .6s ease-out, revglow 1.6s ease-out; z-index: 3; }
+.card.flip { animation: flip .9s cubic-bezier(.2,.8,.3,1), revglow 2s ease-out; z-index: 3; }
+.fxlayer { position: fixed; inset: 0; pointer-events: none; z-index: 35; }
+.fnum { position: fixed; translate: -50% -50%; font-family: var(--display); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 2px 6px rgba(0,0,0,.85), 0 0 2px #000; animation: rise 1.6s cubic-bezier(.2,.7,.3,1) both; }
+.fnum.small { font-size: 18px; }
+.fnum.up { color: #9ef0a8; } .fnum.down { color: #ff8f78; }
+@keyframes rise { 0% { opacity: 0; transform: translateY(8px) scale(.7); } 15% { opacity: 1; transform: translateY(0) scale(1.15); } 70% { opacity: 1; transform: translateY(-26px) scale(1); } 100% { opacity: 0; transform: translateY(-40px); } }
+.powbump .pow { animation: powb .9s ease-out; }
+@keyframes powb { 0% { transform: scale(1); } 30% { transform: scale(1.6); box-shadow: 0 0 12px #fff; } 100% { transform: scale(1); } }
+.tot.bump { animation: totb .9s ease-out; }
+@keyframes totb { 0% { transform: scale(1); } 30% { transform: scale(1.45); } 100% { transform: scale(1); } }
+.card.snuff { z-index: 6; animation: snuff 1.25s ease-in forwards; }
+@keyframes snuff { 0% { filter: none; transform: none; opacity: 1; } 35% { filter: grayscale(1) brightness(.6); transform: scale(1.05); opacity: 1; } 100% { filter: grayscale(1) brightness(.3); transform: translateY(24px) scale(.6) rotate(-6deg); opacity: 0; } }
+.card.shielded { animation: shield 1s ease-out; }
+@keyframes shield { 0% { box-shadow: 0 0 0 0 rgba(255,215,106,.9); } 40% { box-shadow: 0 0 0 6px rgba(255,215,106,.85), 0 0 30px 10px rgba(255,215,106,.55); } 100% { box-shadow: 0 0 0 0 rgba(255,215,106,0); } }
+.card.idolpop .idolmark { animation: powb .9s ease-out; }
+.loc.tribalflash { animation: tribalf 1s ease-out; } .loc.laneflash { animation: lanef 1s ease-out; }
+@keyframes tribalf { 30% { box-shadow: 0 0 0 2px var(--ember), 0 0 34px rgba(217,84,47,.8); } }
+@keyframes lanef { 30% { box-shadow: 0 0 0 2px var(--them), 0 0 34px rgba(147,182,220,.7); } }
+.fire.bump, .stakes.bump { animation: totb .9s ease-out; }
 @keyframes revglow { 0%, 40% { box-shadow: 0 0 0 3px var(--torch), 0 0 26px rgba(243,162,60,.8); } 100% { box-shadow: none; } }
 .card.sel { translate: 0 -10px; box-shadow: 0 0 0 2px var(--torch), 0 8px 18px rgba(0,0,0,.5); }
 .card.cant { filter: saturate(.35) brightness(.7); }
 .card.locked { filter: grayscale(1) brightness(.32); }
-@keyframes flip { 0% { transform: rotateY(90deg) scale(1.2); } 60% { transform: rotateY(0) scale(1.12); } 100% { transform: none; } }
+@keyframes flip { 0% { transform: rotateY(90deg) scale(1.3); } 45% { transform: rotateY(0) scale(1.3); } 75% { transform: scale(1.3); } 100% { transform: none; } }
 
 /* ---------- Game ---------- */
 #game { padding-block: 10px 22px; gap: 12px; }
@@ -510,6 +528,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 </section>
 
 <div class="toasts" id="toasts"></div>
+<div class="fxlayer" id="fxlayer" aria-hidden="true"></div>
 <div class="packfx" id="packfx" hidden role="dialog" aria-modal="true" aria-label="Open Tree Mail"><div class="pf-top"><div class="eyebrow" id="pfStep"></div><h2 id="pfTitle"></h2></div><div class="pf-stage" id="pfStage"></div><div class="pf-bottom" id="pfBottom"></div></div>
 <div class="inspect" id="inspect" hidden role="dialog" aria-modal="true" aria-label="Card details"><div class="insp" id="insp"></div><button class="insp-x" id="inspX" aria-label="Close">×</button></div>
 <div class="overlay" id="overlay" hidden><div class="panel" id="panel"></div></div>
@@ -1815,9 +1834,14 @@ function logLine(text, cls = '') {
   let t = G.recap.find(x => x.turn === G.turn); if (!t) { t = { turn: G.turn, lines: [] }; G.recap.push(t); }
   t.lines.push({ text, cls });
 }
+let FX = []; // on-board effects collected from engine events, played after the next render
 function flushEvents() {
-  const say = msg => { toast(msg); logLine(msg); };
+  const say = msg => { logLine(msg); };
   for (const ev of G.events) {
+    if (ev.t === 'idol' || ev.t === 'safe') FX.push({ k: 'shield', uid: ev.uid });
+    if (ev.t === 'gotidol') FX.push({ k: 'idol', uid: ev.uid });
+    if (ev.t === 'tribal' || ev.t === 'swap' || ev.t === 'urnreveal' || ev.t === 'outback') FX.push({ k: 'lane', t: ev.t, li: ev.li });
+    if (ev.t === 'fire' && ev.owner === 0) FX.push({ k: 'fire' });
     switch (ev.t) {
       case 'loc': newLoc = ev.li; say(`${LOC[G.locs[ev.li].id].name} is revealed.`); break;
       case 'out': say(`${who(ev)} has been voted out.`); break;
@@ -1892,7 +1916,7 @@ function render() {
   $('fire').setAttribute('aria-label', `${fireLeft(G, 0)} of ${me.energy} fire left`);
   $('idolBtn').innerHTML = G.idol[0] ? 'Idol played' : 'Play idol<small>double votes</small>';
   $('idolBtn').disabled = G.idol[0] || busy || G.over;
-  $('endBtn').innerHTML = G.over ? `See results<small>${G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>Turn ${G.turn} of ${G.lastTurn}</small>`;
+  $('endBtn').innerHTML = G.over ? `See results<small>${G.result.quit === 1 ? BOT.name + ' quit' : G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>${G.turn === G.lastTurn ? 'Final turn · votes doubled' : `Turn ${G.turn} of ${G.lastTurn}`}</small>`;
   $('endBtn').disabled = busy;
 }
 // Exile Island (1) and Fire-Making (2) show only the spaces they allow
@@ -1930,35 +1954,35 @@ function startMatch() {
 function beginTurn() {
   startTurn(G);
   if (G.recap) G.recap = G.recap.filter(x => x.lines.length);
-  if (G.turn === G.lastTurn) toast('Final turn. The votes are doubled.');
-  else if (G.players[0].energy > G.turn) toast(`You have ${G.players[0].energy} fire this turn.`);
-  flushEvents(); sel = null; defaultDetail(); render();
-  if (botWantsQuit(G, 1)) { quit(G, 1); toast(`${BOT.name} quits the game!`); render(); }
+  const snap = boardSnap();
+  flushEvents(); sel = null; defaultDetail(); render(); animateBoard(snap);
+  if (G.turn === G.lastTurn) pulse($('stakes'));
+  if (G.players[0].energy > G.turn) pulse($('fire'));
+  if (botWantsQuit(G, 1)) { quit(G, 1); logLine(`${BOT.name} quit the game.`, 'them'); render(); }
 }
 async function endTurn() {
   if (busy || G.over) return;
   busy = true; sel = null; quitArmed = false;
   botPlan(G, 1);
-  if (botWantsIdol(G, 1) && playIdol(G, 1)) toast(`${BOT.name} plays an idol! Votes double next turn.`);
-  render(); await sleep(900);
+  const foeIdol = botWantsIdol(G, 1) && playIdol(G, 1);
+  if (foeIdol) logLine(`${BOT.name} plays an idol. Votes double next turn.`, 'them');
+  render(); if (foeIdol) pulse($('stakes'));
+  await sleep(1100);
+  let snap = boardSnap();
   for (const step of resolveTurn(G)) {
     flashUid = step.t === 'reveal' ? step.uid : null;
     if (step.t === 'order') {
       const anyMine = G.players[0].staged.length, anyTheirs = G.players[1].staged.length;
-      const who1 = step.first === 0 ? 'you reveal' : `${BOT.name} reveals`;
-      if (anyMine && anyTheirs) toast(step.tie ? `Tied on locations: a coin flip says ${who1} first.` : step.first === 0 ? "You're winning more locations, so you reveal first." : `${BOT.name} is winning more locations, so they reveal first.`);
-      else if (!anyMine && !anyTheirs) continue;
-      render(); await sleep(anyMine && anyTheirs ? 1500 : 500);
+      if (anyMine && anyTheirs) logLine(step.tie ? `Tied on locations: a coin flip decides who reveals first.` : step.first === 0 ? 'You reveal first.' : `${BOT.name} reveals first.`);
       continue;
     }
     if (step.t === 'hide') {
       const where = G.locs[step.loc].revealed ? LOC[G.locs[step.loc].id].name : `location ${step.loc + 1}`;
       const mine = step.owner === 0;
       logLine(mine ? `You play ${CARD[step.id].name} at ${where}, face-down until the end.` : `${BOT.name} plays a face-down card at ${where}.`, mine ? 'me' : 'them');
-      if (!mine) toast(`${BOT.name} plays a face-down card at ${where}.`);
       if (mine && G.myDeck.includes(step.id)) G.played0.add(step.id);
       if (!mine && !CARD[step.id].token) G.played1.add(step.id);
-      render(); await sleep(1100);
+      render(); animateBoard(snap); snap = boardSnap(); await sleep(1400);
       continue;
     }
     if (step.t === 'reveal') {
@@ -1967,18 +1991,78 @@ async function endTurn() {
       if (c) {
         const where = G.locs[li].revealed ? LOC[G.locs[li].id].name : `location ${li + 1}`;
         const mine = c.owner === 0;
-        const line = `${mine ? 'You play' : BOT.name + ' plays'} ${CARD[c.id].name} at ${where}.`;
-        logLine(line, mine ? 'me' : 'them');
-        if (!mine) toast(line);
+        logLine(`${mine ? 'You play' : BOT.name + ' plays'} ${CARD[c.id].name} at ${where}.`, mine ? 'me' : 'them');
         if (mine && G.myDeck.includes(c.id)) G.played0.add(c.id);
         if (!mine && !CARD[c.id].token) G.played1.add(c.id);
       }
     } else flushEvents();
-    render();
-    await sleep(step.t === 'reveal' ? 1500 : step.t === 'after' ? 800 : 1700);
+    render(); animateBoard(snap); snap = boardSnap();
+    await sleep(step.t === 'reveal' ? 1900 : step.t === 'after' ? (snap.changed ? 1500 : 500) : 2100);
   }
   flashUid = null; flushEvents(); busy = false;
-  if (G.over) { render(); toast('The votes are in. Check the final board, then see results.'); } else beginTurn();
+  if (G.over) { render(); animateBoard(snap); } else beginTurn();
+}
+
+// ----- Board animation: compare the board before and after each step -----
+function boardSnap() {
+  const cards = new Map(), tots = [];
+  document.querySelectorAll('#board .card[data-uid]').forEach(el => {
+    const uid = +el.dataset.uid; if (!uid) return;
+    cards.set(uid, { rect: el.getBoundingClientRect(), html: el.outerHTML, staged: el.classList.contains('staged') || el.classList.contains('hidmine'), pow: cardPow(uid) });
+  });
+  if (G) G.locs.forEach((L, li) => tots.push([total(G, li, 0), total(G, li, 1)]));
+  return { cards, tots, changed: false };
+}
+function cardPow(uid) { for (const L of G.locs) for (const sd of L.sides) { const c = sd.find(x => x.uid === uid); if (c) return power(G, c); } return null; }
+function floatNum(rect, d, cls = '') {
+  const el = document.createElement('div');
+  el.className = 'fnum ' + (d > 0 ? 'up ' : 'down ') + cls; el.textContent = (d > 0 ? '+' : '−') + Math.abs(d);
+  el.style.left = (rect.left + rect.width / 2) + 'px'; el.style.top = (rect.top + rect.height * .35) + 'px';
+  $('fxlayer').appendChild(el); setTimeout(() => el.remove(), 1700);
+}
+function pulse(el, cls = 'bump') { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 900); }
+function animateBoard(prev) {
+  if (!prev || !G) return;
+  const rm = reduceMotion();
+  let changed = false;
+  const now = new Map();
+  document.querySelectorAll('#board .card[data-uid]').forEach(el => { const uid = +el.dataset.uid; if (uid) now.set(uid, el); });
+  now.forEach((el, uid) => {
+    const p = prev.cards.get(uid); if (!p) return;
+    const r = el.getBoundingClientRect();
+    const dx = p.rect.left - r.left, dy = p.rect.top - r.top;
+    if (!rm && (Math.abs(dx) > 4 || Math.abs(dy) > 4) && !p.staged) {     // moved, flipped or switched sides: slide it over
+      el.animate([{ transform: `translate(${dx}px, ${dy}px)`, zIndex: 5 }, { transform: 'none', zIndex: 5 }], { duration: 650, easing: 'cubic-bezier(.3,.7,.2,1)' });
+      changed = true;
+    }
+    const pw = cardPow(uid);
+    if (!p.staged && p.pow != null && pw != null && pw !== p.pow) { floatNum(r, pw - p.pow); pulse(el, 'powbump'); changed = true; }
+  });
+  prev.cards.forEach((p, uid) => {                                         // left the board: snuffed out
+    if (now.has(uid) || p.staged) return;
+    const g = document.createElement('div'); g.innerHTML = p.html;
+    const el = g.firstElementChild; if (!el) return;
+    el.classList.add('snuff'); el.classList.remove('flip');
+    Object.assign(el.style, { position: 'fixed', left: p.rect.left + 'px', top: p.rect.top + 'px', width: p.rect.width + 'px', height: p.rect.height + 'px', margin: 0 });
+    $('fxlayer').appendChild(el); setTimeout(() => el.remove(), 1300); changed = true;
+  });
+  const lanes = document.querySelectorAll('#board .lane');
+  G.locs.forEach((L, li) => {
+    const before = prev.tots[li]; if (!before) return;
+    [0, 1].forEach(p => {
+      const d = total(G, li, p) - before[p]; if (!d) return;
+      const tot = lanes[li] && lanes[li].querySelector(p === 0 ? '.tot.y' : '.tot.t');
+      if (tot) { pulse(tot); floatNum(tot.getBoundingClientRect(), d, 'small'); }
+      changed = true;
+    });
+  });
+  for (const f of FX) {
+    if (f.k === 'shield' || f.k === 'idol') { const el = now.get(f.uid); if (el) pulse(el, f.k === 'shield' ? 'shielded' : 'idolpop'); changed = true; }
+    if (f.k === 'lane') { const li = f.li != null ? f.li : G.locs.findIndex(L => L.revealed && (f.t === 'tribal' ? L.id === 'tribal' : f.t === 'swap' ? L.id === 'swap' : true)); if (lanes[li]) pulse(lanes[li].querySelector('.loc'), f.t === 'tribal' ? 'tribalflash' : 'laneflash'); changed = true; }
+    if (f.k === 'fire') pulse($('fire'));
+  }
+  FX = [];
+  prev.changed = changed;
 }
 function finish() {
   const r = G.result, won = r.winner === 0, tie = r.winner === -1;
@@ -2041,7 +2125,7 @@ $('goneBtn').onclick = () => {
 };
 $('playBtn').onclick = startMatch;
 $('endBtn').onclick = () => { if (G && G.over) finish(); else endTurn(); };
-$('idolBtn').onclick = () => { if (!busy && playIdol(G, 0)) { toast(G.turn === G.lastTurn ? 'You play your idol. Votes double!' : 'You play your idol. Votes double next turn.'); render(); } };
+$('idolBtn').onclick = () => { if (!busy && playIdol(G, 0)) { logLine(G.turn === G.lastTurn ? 'You play your idol. Votes double!' : 'You play your idol. Votes double next turn.', 'me'); render(); pulse($('stakes')); } };
 $('quitBtn').onclick = () => {
   if (busy || G.over) return;
   if (!quitArmed) { quitArmed = true; render(); setTimeout(() => { if (quitArmed) { quitArmed = false; if (G && !G.over) render(); } }, 3000); return; }
