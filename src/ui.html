@@ -494,7 +494,7 @@ const $ = id => document.getElementById(id);
 const RANKS = [[0, 'Castaway'], [10, 'Swing Vote'], [25, 'Merged'], [45, 'Juror'], [70, 'Finalist'], [100, 'Sole Survivor']];
 const MAX_DECKS = 10;
 const BACKS = [{ id: 'torch', name: 'Torch Night' }, { id: 'bamboo', name: 'Bamboo' }, { id: 'buff', name: 'Tribe Buff' }, { id: 'parchment', name: 'Parchment' }, { id: 'idol', name: 'Hidden Idol' }];
-const BOT_BACK = { Tagi: 'buff', Pagong: 'bamboo', Koror: 'idol', Ulong: 'parchment' };
+const BOT_BACK = { Tagi: 'buff', Pagong: 'bamboo', Koror: 'idol', Ulong: 'parchment', Rotu: 'torch' };
 const okBack = b => BACKS.some(x => x.id === b);
 const backName = b => (BACKS.find(x => x.id === b) || BACKS[0]).name;
 const backHTML = (b, cls = '') => `<div class="card back bk-${okBack(b) ? b : 'torch'} ${cls}"></div>`;
@@ -1278,6 +1278,11 @@ function flushEvents() {
       case 'dod': say(ev.ok ? `Do or Die: ${who(ev)} survives and gets +6!` : `Do or Die: ${who(ev)} picked the wrong box.`); break;
       case 'tyson': say('Tyson votes himself out.'); break;
       case 'mole': say(`${who(ev)} slips over to the other side.`); break;
+      case 'lex': say(`Lex blindsides his ally: ${who(ev)} switches sides.`); break;
+      case 'robc': say(`Rob C. flips the vote: ${CARD[ev.id].short} and ${CARD[ev.id2].short} swap influence.`); break;
+      case 'fakeidol': say(ev.owner === 0 ? 'Bob slipped a Fake Idol into your hand.' : `Bob slipped a Fake Idol into ${BOT.name}'s hand.`); break;
+      case 'ian': say('Ian bows out. His tribe gets +2 here.'); break;
+      case 'objective': say(`${who(ev)} completes his objective: +5.`); break;
     }
   }
   G.events = [];
@@ -1446,7 +1451,7 @@ $('recapBtn').onclick = () => {
 };
 $('goneBtn').onclick = () => {
   if (!G) return;
-  const why = { out: 'Voted out', scenario: 'Scenario used', stolen: 'Stolen' };
+  const why = { out: 'Voted out', scenario: 'Scenario used', stolen: 'Stolen', left: 'Bowed out' };
   const group = (p, title) => {
     const list = G.gone.filter(x => x.owner === p);
     return `<div class="gone"><h3>${title} <span class="eyebrow">${list.length}</span></h3>${list.length ? `<div class="gonegrid">${list.map(x => `<button class="tile" data-gone="${x.uid}">${cardHTML(x.id)}<span>${why[x.why]} · T${x.turn}</span></button>`).join('')}</div>` : '<p>None yet.</p>'}</div>`;

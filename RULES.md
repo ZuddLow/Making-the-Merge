@@ -18,8 +18,8 @@
 - Each owned card records a count and a variants list, ready for rare variants later.
 - Art is shared by everyone; only editors of the artifact can upload it. Collections are per person (account when available, otherwise device).
 
-## Cards (54)
-The full card list with design notes and change log is published as the Making the Merge Card List page.
+## Cards (68)
+The full card list with design notes and change log is the site's cards.html page.
 
 | Card | Tier | Cost | Influence | Ability type | Ability |
 |---|---|---|---|---|---|
@@ -34,6 +34,8 @@ The full card list with design notes and change log is published as the Making t
 | J.T. Thomas | Day One | 1 | 4 | On Reveal | On Reveal: Give a hidden idol to the strongest enemy card here. |
 | Immunity Necklace | Day One | 1 | 0 | On Reveal | Scenario: Give your strongest card here a hidden idol. |
 | Shot in the Dark | Day One | 1 | 0 | On Reveal | Scenario: 1 in 3 chance to give each of your cards here a hidden idol. |
+| Bob Crowley | Day One | 1 | 2 | On Reveal | On Reveal: Put a Fake Idol into your opponent's hand. |
+| Ian Rosenberger | Day One | 1 | 3 | End of Turn | End of Turn: If you lead here by 6 or more, Ian bows out and your other cards here get +2. |
 | Parvati Shallow (starter) | Day One | 2 | 2 | Ongoing | Ongoing: +3 influence if you have more cards here than your opponent. |
 | Tony Vlachos (starter) | Day One | 2 | 2 | On Reveal | On Reveal: If your opponent played a card here this turn, +3 influence. |
 | Reward Challenge (starter) | Day One | 2 | 0 | On Reveal | Scenario: Your other cards here get +2 influence. |
@@ -49,6 +51,10 @@ The full card list with design notes and change log is published as the Making t
 | Phillip Sheppard | Day One | 2 | -4 | On Reveal | On Reveal: Switches to the enemy side here, if there's room. |
 | Idol Nullifier | Day One | 2 | 0 | On Reveal | Scenario: Remove every hidden idol from enemy cards, at all locations. |
 | Extra Vote | Day One | 2 | 0 | On Reveal | Scenario: Your strongest card here gets +4 influence. |
+| Vecepia Towery | Day One | 2 | 2 | Start of Turn | Start of Turn: +1 influence if this isn't the strongest card here. |
+| Yau-Man Chen | Day One | 2 | 2 | On Reveal | On Reveal: The weakest enemy card here gets +3 influence. Draw 2 cards. |
+| Dreamz Herd | Day One | 2 | 4 | Ongoing | Ongoing: On turn 6, +3 influence and your other cards here have -2. |
+| Stephenie LaGrossa | Day One | 2 | 2 | Ongoing | Ongoing: +1 influence for each enemy card here. |
 | Ozzy Lusth (starter) | Day One | 3 | 3 | Ongoing | Ongoing: +4 influence if this is your only card here. |
 | Yam Yam Arocho (starter) | Day One | 3 | 3 | On Reveal | On Reveal: Your other cards here get +1 influence. |
 | Brian Heidik | Day One | 3 | 3 | On Reveal | On Reveal: Drag a Goat to the enemy side of each other location. |
@@ -61,9 +67,17 @@ The full card list with design notes and change log is published as the Making t
 | Rachel LaMont | Day One | 3 | 3 | On Reveal | On Reveal: +3 influence if you've played a Scenario this game. |
 | Coach Wade | Day One | 3 | 4 | On Reveal | On Reveal: Move your strongest card from another location here. |
 | Do or Die | Day One | 3 | 0 | On Reveal | Scenario: Coin flip. Your strongest card here gets +6 influence, or it's voted out. |
+| Rudy Boesch | Day One | 3 | 5 | Ongoing | Ongoing: Can't be moved, flipped or switched to the other side. |
+| Lex van den Berghe | Day One | 3 | 3 | On Reveal | On Reveal: Your weakest other card here switches to the enemy side. +3 influence. |
+| Rob Cesternino | Day One | 3 | 1 | On Reveal | On Reveal: Swap the influence of the strongest enemy card here with 6 or less influence and your weakest card here. |
+| Chris Daugherty | Day One | 3 | 3 | Objective | Objective: At game end, if you're losing here by 4 or less, +5 influence. |
+| Yul Kwon | Day One | 3 | 3 | Ongoing | Ongoing: Your cards holding a hidden idol, anywhere, have +2 influence. |
+| James Clement | Day One | 3 | 5 | Ongoing | Ongoing: Hidden idols don't protect him. While holding one, +3 influence. |
 | Joe Anglim (starter) | Day One | 4 | 6 | No ability | No ability. |
 | Colby Donaldson | Day One | 4 | 7 | Ongoing | Ongoing: Your other cards here have -1 influence. |
 | Ben Driebergen | Day One | 4 | 4 | Ongoing | Ongoing: +5 influence at Tribal Council or Fire-Making. |
+| Ethan Zohn | Day One | 4 | 5 | Ongoing | Ongoing: Your other cards here can't drop below their printed influence. |
+| Terry Deitz | Day One | 4 | 4 | Start of Turn | Start of Turn: +1 influence. |
 | Kim Spradlin (starter) | Day One | 5 | 6 | Ongoing | Ongoing: Enemy cards here have -1 influence. |
 | Earl Cole | Day One | 5 | 6 | Ongoing | Ongoing: +4 influence if you're winning both other locations. |
 | Tom Westman (starter) | Day One | 6 | 11 | No ability | No ability. |
@@ -96,6 +110,7 @@ The full card list with design notes and change log is published as the Making t
 - **Tagi** (Alliance): cochran, maryanne, parvati, tony, reward, yamyam, rob, hatch, joe, cirie, kim, westman
 - **Pagong** (Vote Out): natalie, rick, erik, kass, sandra, kim, rocks, brian, blindside, cirie, dee, jeff
 - **Koror** (Idol Hunters): jt, necklace, david, malcolm, extravote, rachel, kenzie, jerri, ben, colby, chris, earl
+- **Rotu** (Old School): bob, ian, vecepia, steph, yauman, dreamz, chrisd, yul, james, rudy, lex, terry
 - **Ulong** (Idols & Beasts): cochran, erik, maryanne, russell, tony, ozzy, brian, jeremy, joe, kim, dee, westman
 
 ## Design rules

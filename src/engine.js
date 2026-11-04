@@ -61,17 +61,33 @@ const CARDS = [
   { id: 'nullifier', name: 'Idol Nullifier', short: 'Nullifier', cost: 2, power: 0, arch: 'event', type: 'event', text: 'Scenario: Remove every hidden idol from enemy cards, at all locations.' },
   { id: 'extravote', name: 'Extra Vote', short: 'Extra Vote', cost: 2, power: 0, arch: 'event', type: 'event', text: 'Scenario: Your strongest card here gets +4 influence.' },
   { id: 'doordie', name: 'Do or Die', short: 'Do or Die', cost: 3, power: 0, arch: 'event', type: 'event', text: "Scenario: Coin flip. Your strongest card here gets +6 influence, or it's voted out." },
+  // ---- Batch 4: early era (Seasons 1-20) ----
+  { id: 'rudy', name: 'Rudy Boesch', short: 'Rudy', cost: 3, power: 5, arch: 'beast', text: "Ongoing: Can't be moved, flipped or switched to the other side." },
+  { id: 'ethan', name: 'Ethan Zohn', short: 'Ethan', cost: 4, power: 5, arch: 'alliance', text: "Ongoing: Your other cards here can't drop below their printed influence." },
+  { id: 'lex', name: 'Lex van den Berghe', short: 'Lex', cost: 3, power: 3, arch: 'vote', text: 'On Reveal: Your weakest other card here switches to the enemy side. +3 influence.' },
+  { id: 'vecepia', name: 'Vecepia Towery', short: 'Vecepia', cost: 2, power: 2, arch: 'strat', text: "Start of Turn: +1 influence if this isn't the strongest card here." },
+  { id: 'robc', name: 'Rob Cesternino', short: 'Rob C.', cost: 3, power: 1, arch: 'strat', text: 'On Reveal: Swap the influence of the strongest enemy card here with 6 or less influence and your weakest card here.' },
+  { id: 'chrisd', name: 'Chris Daugherty', short: 'Chris D.', cost: 3, power: 3, arch: 'strat', text: "Objective: At game end, if you're losing here by 4 or less, +5 influence." },
+  { id: 'terry', name: 'Terry Deitz', short: 'Terry', cost: 4, power: 4, arch: 'beast', text: 'Start of Turn: +1 influence.' },
+  { id: 'yul', name: 'Yul Kwon', short: 'Yul', cost: 3, power: 3, arch: 'idol', text: 'Ongoing: Your cards holding a hidden idol, anywhere, have +2 influence.' },
+  { id: 'yauman', name: 'Yau-Man Chen', short: 'Yau-Man', cost: 2, power: 2, arch: 'strat', text: "On Reveal: The weakest enemy card here gets +3 influence. Draw 2 cards." },
+  { id: 'dreamz', name: 'Dreamz Herd', short: 'Dreamz', cost: 2, power: 4, arch: 'vote', text: 'Ongoing: On turn 6, +3 influence and your other cards here have -2.' },
+  { id: 'james', name: 'James Clement', short: 'James', cost: 3, power: 5, arch: 'idol', text: "Ongoing: Hidden idols don't protect him. While holding one, +3 influence." },
+  { id: 'bob', name: 'Bob Crowley', short: 'Bob', cost: 1, power: 2, arch: 'idol', text: "On Reveal: Put a Fake Idol into your opponent's hand." },
+  { id: 'steph', name: 'Stephenie LaGrossa', short: 'Stephenie', cost: 2, power: 2, arch: 'beast', text: 'Ongoing: +1 influence for each enemy card here.' },
+  { id: 'ian', name: 'Ian Rosenberger', short: 'Ian', cost: 1, power: 3, arch: 'alliance', text: 'End of Turn: If you lead here by 6 or more, Ian bows out and your other cards here get +2.' },
+  { id: 'fakeidol', name: 'Fake Idol', short: 'Fake Idol', cost: 1, power: 0, arch: 'event', type: 'event', token: true, text: 'Scenario: Does nothing. Bob made it out of a stick.' },
   { id: 'goat', name: 'Goat', short: 'Goat', cost: 0, power: 0, arch: 'goat', token: true, text: 'Takes up a spot. Does nothing.' }
 ];
 const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
 // Ability types. Cards that fire when something happens keep the 'reaction' label.
 const KW = { reveal: 'On Reveal', ongoing: 'Ongoing', start: 'Start of Turn', end: 'End of Turn', objective: 'Objective', reaction: 'Reaction', none: 'No ability' };
 const CARD_KW = {
-  ongoing: ['erik', 'parvati', 'sandra', 'ozzy', 'rob', 'jeremy', 'hatch', 'kim', 'amber', 'tina', 'michele', 'colby', 'ben', 'earl'],
+  ongoing: ['erik', 'parvati', 'sandra', 'ozzy', 'rob', 'jeremy', 'hatch', 'kim', 'amber', 'tina', 'michele', 'colby', 'ben', 'earl', 'rudy', 'ethan', 'yul', 'dreamz', 'james', 'steph'],
   reaction: ['natalie', 'rick', 'spencer'],
-  end: ['tyson'],
+  end: ['tyson', 'ian'],
   none: ['joe', 'westman', 'goat'],
-  start: [], objective: []
+  start: ['vecepia', 'terry'], objective: ['chrisd']
 };
 CARDS.forEach(c => { c.kw = Object.keys(CARD_KW).find(k => CARD_KW[k].includes(c.id)) || 'reveal'; });
 
@@ -95,6 +111,7 @@ const BOTS = [
   { name: 'Tagi', style: 'Alliance', deck: ['cochran', 'maryanne', 'parvati', 'tony', 'reward', 'yamyam', 'rob', 'hatch', 'joe', 'cirie', 'kim', 'westman'] },
   { name: 'Pagong', style: 'Vote Out', deck: ['natalie', 'rick', 'erik', 'kass', 'sandra', 'kim', 'rocks', 'brian', 'blindside', 'cirie', 'dee', 'jeff'] },
   { name: 'Koror', style: 'Idol Hunters', deck: ['jt', 'necklace', 'david', 'malcolm', 'extravote', 'rachel', 'kenzie', 'jerri', 'ben', 'colby', 'chris', 'earl'] },
+  { name: 'Rotu', style: 'Old School', deck: ['bob', 'ian', 'vecepia', 'steph', 'yauman', 'dreamz', 'chrisd', 'yul', 'james', 'rudy', 'lex', 'terry'] },
   { name: 'Ulong', style: 'Idols & Beasts', deck: ['cochran', 'erik', 'maryanne', 'russell', 'tony', 'ozzy', 'brian', 'jeremy', 'joe', 'kim', 'dee', 'westman'] }
 ];
 const STARTER = ['cochran', 'maryanne', 'erik', 'parvati', 'tony', 'reward', 'ozzy', 'yamyam', 'rob', 'joe', 'kim', 'westman'];
@@ -110,7 +127,8 @@ const CARD_TIER = {
   spencer: 1, amber: 1, carolyn: 1, jt: 1, malcolm: 1, tyson: 1, fairplay: 1, tina: 1, michele: 1, david: 1, q: 1,
   jerri: 1, rupert: 1, sarah: 1, chris: 1, kenzie: 1, rachel: 1, colby: 1, ben: 1, earl: 1,
   kelly: 1, phillip: 1, wade: 1,
-  necklace: 1, shotdark: 1, nullifier: 1, extravote: 1, doordie: 1
+  necklace: 1, shotdark: 1, nullifier: 1, extravote: 1, doordie: 1,
+  rudy: 1, ethan: 1, lex: 1, vecepia: 1, robc: 1, chrisd: 1, terry: 1, yul: 1, yauman: 1, dreamz: 1, james: 1, bob: 1, steph: 1, ian: 1
 };
 
 let RNG = Math.random;
@@ -174,14 +192,20 @@ function power(g, c) {
     } finally { REF_DEPTH--; }
   }
   for (const o of mine) if (o !== c && o.id === 'colby') v -= 1;
+  if (c.id === 'steph') v += theirs.length;
+  if (c.id === 'james' && c.idol) v += 3;
+  if (c.idol && g.locs.some(M => M.sides[c.owner].some(o => o.id === 'yul'))) v += 2;
+  if (g.turn === 6) { if (c.id === 'dreamz') v += 3; for (const o of mine) if (o !== c && o.id === 'dreamz') v -= 2; }
   if (c.id === 'parvati' && mine.length > theirs.length) v += 3;
   if (c.id === 'sandra') v += g.votedOut;
   if (c.id === 'ozzy' && mine.length === 1) v += 4;
   for (const o of mine) if (o !== c && o.id === 'rob') v += 1;
   for (const o of theirs) { if (o.id === 'erik') v += 1; if (o.id === 'kim') v -= 1; }
   g.locs.forEach(M => { if (M !== L) for (const o of M.sides[c.owner]) if (o.id === 'hatch') v += 1; });
+  if (mine.some(o => o !== c && o.id === 'ethan')) v = Math.max(v, CARD[c.id].power);
   return v;
 }
+const fixedCard = c => c.id === 'rudy'; // Rudy never moves or changes sides
 function total(g, li, p) { return g.locs[li].sides[p].reduce((s, c) => s + power(g, c), 0); }
 function locWinner(g, li) { const a = total(g, li, 0), b = total(g, li, 1); return a > b ? 0 : b > a ? 1 : -1; }
 function standing(g) {
@@ -206,6 +230,14 @@ function startTurn(g) {
   g.stakes = g.pending;
   if (g.turn <= 3) revealLoc(g, g.turn - 1);
   for (let p = 0; p < 2; p++) { draw(g, p); g.players[p].energy = g.turn; }
+  // Start of Turn abilities, for cards already on the board
+  g.locs.forEach(L => {
+    const all = [...L.sides[0], ...L.sides[1]];
+    for (const c of all) {
+      if (c.id === 'terry') { c.perm += 1; emit(g, { t: 'sot', id: c.id }); }
+      if (c.id === 'vecepia') { const top = Math.max(...all.map(o => power(g, o))); if (power(g, c) < top) { c.perm += 1; emit(g, { t: 'sot', id: c.id }); } }
+    }
+  });
 }
 
 function playIdol(g, p) { if (g.over || g.idol[p]) return false; g.idol[p] = true; g.pending *= 2; return true; }
@@ -215,7 +247,7 @@ function voteOut(g, c) {
   if (c.loc < 0) return false;
   const L = g.locs[c.loc];
   if (c.id === 'sandra' || isImmunity(L) || L.sides[c.owner].some(o => o !== c && o.id === 'jeremy')) { emit(g, { t: 'safe', uid: c.uid, id: c.id }); return false; }
-  if (c.idol) { c.idol = false; emit(g, { t: 'idol', uid: c.uid, id: c.id }); return false; }
+  if (c.idol && c.id !== 'james') { c.idol = false; emit(g, { t: 'idol', uid: c.uid, id: c.id }); return false; }
   const from = c.loc; removeFrom(g, c); g.votedOut++; g.outBy[c.owner]++;
   const goneEntry = { uid: c.uid, id: c.id, owner: c.owner, turn: g.turn, why: 'out' }; g.gone.push(goneEntry);
   g.locs.forEach(M => M.sides[1 - c.owner].forEach(o => { if (o.id === 'spencer') o.perm += 1; }));
@@ -250,7 +282,7 @@ function playEffects(g, c, li, p) {
     case 'brian': g.locs.forEach((M, mi) => { if (mi !== li && M.sides[op].length < cap(M)) place(g, mk(g, 'goat', op), mi, op); }); emit(g, { t: 'goats' }); break;
     case 'cirie': {
       if (isImmunity(L) || L.sides[p].length >= cap(L)) break;
-      const t = minBy(L.sides[op].filter(o => power(g, o) <= 3), o => power(g, o));
+      const t = minBy(L.sides[op].filter(o => power(g, o) <= 3 && !fixedCard(o)), o => power(g, o));
       if (t) { removeFrom(g, t); place(g, t, li, p); emit(g, { t: 'flip', uid: t.uid, id: t.id }); }
       break;
     }
@@ -267,11 +299,25 @@ function playEffects(g, c, li, p) {
     case 'wade': {
       if (L.sides[p].length >= cap(L)) break;
       const cands = [];
-      g.locs.forEach((M, mi) => { if (mi !== li && !isImmunity(M)) M.sides[p].forEach(o => cands.push(o)); });
+      g.locs.forEach((M, mi) => { if (mi !== li && !isImmunity(M)) M.sides[p].forEach(o => { if (!fixedCard(o)) cands.push(o); }); });
       const t = maxBy(cands, o => power(g, o));
       if (t) { removeFrom(g, t); place(g, t, li, p); emit(g, { t: 'moved', uid: t.uid, id: t.id }); }
       break;
     }
+    case 'lex': {
+      c.perm += 3;
+      if (isImmunity(L) || L.sides[op].length >= cap(L)) break;
+      const t = minBy(L.sides[p].filter(o => o !== c && !fixedCard(o)), o => power(g, o));
+      if (t) { removeFrom(g, t); place(g, t, li, op); emit(g, { t: 'lex', uid: t.uid, id: t.id }); }
+      break;
+    }
+    case 'robc': {
+      const a = maxBy(L.sides[op].filter(o => power(g, o) <= 6), o => power(g, o)), b = minBy(L.sides[p], o => power(g, o));
+      if (a && b) { const d = power(g, a) - power(g, b); if (d > 0) { a.perm -= d; b.perm += d; emit(g, { t: 'robc', id: a.id, id2: b.id }); } }
+      break;
+    }
+    case 'yauman': { const t = minBy(L.sides[op], o => power(g, o)); if (t) t.perm += 3; draw(g, p, 2); break; }
+    case 'bob': { const H = g.players[op].hand; if (H.length < 7) { H.push(mk(g, 'fakeidol', op)); emit(g, { t: 'fakeidol', owner: op }); } break; }
     case 'phillip':
       if (L.sides[op].length < cap(L)) { removeFrom(g, c); place(g, c, li, op); emit(g, { t: 'mole', uid: c.uid, id: c.id }); }
       break;
@@ -299,7 +345,7 @@ function playEffects(g, c, li, p) {
     case 'doordie': { const t = maxBy(L.sides[p].filter(o => o !== c), o => power(g, o)); if (t) { if (RNG() < 0.5) { t.perm += 6; emit(g, { t: 'dod', ok: true, id: t.id }); } else { emit(g, { t: 'dod', ok: false, id: t.id }); voteOut(g, t); } } break; }
     case 'tribeswap': {
       if (isImmunity(L)) break;
-      const t = maxBy(L.sides[op], o => power(g, o)); if (!t) break;
+      const t = maxBy(L.sides[op].filter(o => !fixedCard(o)), o => power(g, o)); if (!t) break;
       const d = [0, 1, 2].filter(i => i !== li && g.locs[i].sides[op].length < cap(g.locs[i]));
       if (d.length) { removeFrom(g, t); place(g, t, pick(d), op); emit(g, { t: 'moved', uid: t.uid, id: t.id }); }
       break;
@@ -312,7 +358,7 @@ function playEffects(g, c, li, p) {
   else if (P.kellyArm && def.type !== 'event' && c.loc >= 0 && c.owner === p) {
     P.kellyArm = false;
     const from = g.locs[c.loc], to = c.loc - 1, T = g.locs[to];
-    if (to >= 0 && !isImmunity(from) && T.sides[p].length < cap(T)) { removeFrom(g, c); place(g, c, to, p); emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
+    if (to >= 0 && !fixedCard(c) && !isImmunity(from) && T.sides[p].length < cap(T)) { removeFrom(g, c); place(g, c, to, p); emit(g, { t: 'moved', uid: c.uid, id: c.id }); }
   }
   if (def.type === 'event' && c.loc >= 0) { removeFrom(g, c); g.gone.push({ uid: c.uid, id: c.id, owner: p, turn: g.turn, why: 'scenario' }); }
 }
@@ -356,11 +402,29 @@ function* endOfTurn(g) {
   }
   if (g.turn === 4) for (const L of g.locs) {
     if (!L.revealed || L.id !== 'swap') continue;
-    L.sides = [L.sides[1], L.sides[0]];
+    const stay = [L.sides[0].filter(fixedCard), L.sides[1].filter(fixedCard)];
+    const ns = [L.sides[1].filter(c => !fixedCard(c)).concat(stay[0]), L.sides[0].filter(c => !fixedCard(c)).concat(stay[1])];
+    L.sides = ns[0].length <= cap(L) && ns[1].length <= cap(L) ? ns : [L.sides[1], L.sides[0]]; // no room to stay put: Rudy swaps too
     L.sides.forEach((s, p) => s.forEach(c => { c.owner = p; }));
     emit(g, { t: 'swap' }); yield { t: 'swap' };
   }
-  if (g.turn >= 6) { g.over = true; g.result = { winner: gameWinner(g), stakes: g.pending, quit: -1 }; }
+  for (const [li, L] of g.locs.entries()) for (const p of [0, 1]) for (const c of [...L.sides[p]]) {
+    if (c.id !== 'ian') continue;
+    if (total(g, li, p) - total(g, li, 1 - p) >= 6) {
+      removeFrom(g, c); g.gone.push({ uid: c.uid, id: c.id, owner: p, turn: g.turn, why: 'left' });
+      L.sides[p].forEach(o => { o.perm += 2; });
+      emit(g, { t: 'ian', id: c.id }); yield { t: 'ian' };
+    }
+  }
+  if (g.turn >= 6) {
+    // Objectives are checked at game end, before the winner is decided
+    for (const [li, L] of g.locs.entries()) for (const p of [0, 1]) for (const c of L.sides[p]) {
+      if (c.id !== 'chrisd') continue;
+      const gap = total(g, li, 1 - p) - total(g, li, p);
+      if (gap >= 1 && gap <= 4) { c.perm += 5; emit(g, { t: 'objective', id: c.id }); yield { t: 'objective' }; }
+    }
+    g.over = true; g.result = { winner: gameWinner(g), stakes: g.pending, quit: -1 };
+  }
 }
 
 // ----- Bot -----
