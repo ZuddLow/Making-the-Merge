@@ -185,6 +185,9 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .loc p { margin: 0; font-size: 11px; line-height: 1.2; color: var(--sand-dim); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .loc.art p { color: #d7cfb6; text-shadow: 0 1px 2px rgba(0,0,0,.9); }
 .loc.hidden h3 { color: var(--sand-dim); }
+.loc.snaked { filter: saturate(.35) brightness(.8); box-shadow: inset 0 0 0 1px rgba(143,219,154,.45); }
+.loc.snaked::after { content: "Snaked"; position: absolute; left: 50%; bottom: 26px; translate: -50% 0; white-space: nowrap; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #0c120f; background: #8fdb9a; border-radius: 999px; padding: 1px 7px; }
+.loc.snaked p { text-decoration: line-through; text-decoration-color: rgba(143,219,154,.7); }
 .loc.new { animation: glow 1.2s ease-out, locflip .6s cubic-bezier(.2,.8,.3,1.2); }
 @keyframes locflip { from { transform: perspective(500px) rotateY(90deg) scale(.9); } to { transform: none; } }
 .board.arrive .loc { animation: locin .5s cubic-bezier(.2,.8,.3,1.1) both; }
@@ -1341,6 +1344,7 @@ function flushEvents() {
   for (const ev of G.events) {
     if (ev.t === 'idol' || ev.t === 'safe') FX.push({ k: 'shield', uid: ev.uid });
     if (ev.t === 'gotidol') FX.push({ k: 'idol', uid: ev.uid });
+    if (ev.t === 'snake' || ev.t === 'snakeend' || ev.t === 'locsoff') G.locs.forEach((_, li) => FX.push({ k: 'lane', t: 'snake', li }));
     if (ev.t === 'tribal' || ev.t === 'swap' || ev.t === 'urnreveal' || ev.t === 'outback') FX.push({ k: 'lane', t: ev.t, li: ev.li });
     if (ev.t === 'fire' && ev.owner === 0) FX.push({ k: 'fire' });
     switch (ev.t) {
@@ -1369,6 +1373,12 @@ function flushEvents() {
       case 'mole': say(`${who(ev)} slips over to the other side.`); break;
       case 'lex': say(`Lex blindsides his ally: ${who(ev)} switches sides.`); break;
       case 'robc': say(`Rob C. flips the vote: ${CARD[ev.id].short} and ${CARD[ev.id2].short} swap influence.`); break;
+      case 'sue': say(ev.owner === 0 ? `Sue Hawk hands you a Rat and a Snake.` : `Sue Hawk hands ${BOT.name} a Rat and a Snake.`); break;
+      case 'rat': say(ev.owner === 0 ? `The Rat gets into the rice: next turn you get +1 fire, ${BOT.name} gets −1.` : `${BOT.name}'s Rat gets into the rice: next turn you get −1 fire.`); break;
+      case 'snake': say(`${ev.owner === 0 ? 'Your' : BOT.name + "'s"} Snake strikes: next turn, locations have no effect.`); break;
+      case 'locsoff': say('Snake bite: locations have no effect this turn.'); break;
+      case 'snaked': say(`${LOC[G.locs[ev.li].id].name} is revealed, but the Snake has silenced it.`); break;
+      case 'snakeend': say('The Snake shuts down The Outback. There is no turn 7: this is the final vote, and it doubles!'); break;
       case 'fakeidol': say(ev.owner === 0 ? 'Bob slipped a Fake Idol into your hand.' : `Bob slipped a Fake Idol into ${BOT.name}'s hand.`); break;
       case 'ian': say('Ian bows out. His tribe gets +2 here.'); break;
       case 'objective': say(`${who(ev)} completes his objective: +5.`); break;
@@ -1405,7 +1415,7 @@ function render() {
     const fin = G.over && G.result.quit < 0 ? (y > t ? 'final-win' : t > y ? 'final-lose' : '') : '';
     return `<div class="lane ${ok ? 'ok' : ''} ${fin}" data-li="${li}" tabindex="0" aria-label="Location ${li + 1}">
       <div class="slots them ${slotCls(L, 1)}">${slot(L.sides[1], foe.staged.filter(s => s.loc === li), true, L.hid[1])}</div>
-      <div class="loc ${L.revealed ? '' : 'hidden'} ${newLoc === li ? 'new' : ''} ${hasArt(a) ? 'art' : ''}" data-loc="${li}"${locGameStyle(a)}>
+      <div class="loc ${L.revealed ? '' : 'hidden'} ${L.off ? 'snaked' : ''} ${newLoc === li ? 'new' : ''} ${hasArt(a) ? 'art' : ''}" data-loc="${li}"${locGameStyle(a)}>
         <span class="tot t ${t > y ? 'win' : ''}">${t}${L.hid[1].length ? '<i>+?</i>' : ''}</span>
         <h3>${L.revealed ? def.name : 'Unrevealed'}</h3><p>${L.revealed ? def.text : `Reveals on turn ${li + 1}.`}</p>
         <span class="tot y ${y > t ? 'win' : ''}">${y}${L.hid[0].length ? '<i>+?</i>' : ''}</span></div>

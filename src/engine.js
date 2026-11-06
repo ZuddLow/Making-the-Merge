@@ -83,6 +83,10 @@ const CARDS = [
   { id: 'elisabeth', name: 'Elisabeth Hasselbeck', short: 'Elisabeth', cost: 3, power: 4, arch: 'strat', text: 'On Reveal: This location becomes The Outback.' },
   { id: 'holloway', name: 'Mike Holloway', short: 'Holloway', cost: 7, power: 13, arch: 'beast', text: 'No ability.' },
   { id: 'nwhite', name: 'Natalie White', short: 'Natalie W.', cost: 3, power: 4, arch: 'strat', text: 'Ongoing: Cards played here after this stay face-down until the game ends.' },
+  // ---- Batch 6: Rats and Snakes (held for playtesting) ----
+  { id: 'sue', name: 'Sue Hawk', short: 'Sue', cost: 3, power: 2, arch: 'vote', held: true, text: 'On Reveal: Add a Rat and a Snake to your hand.' },
+  { id: 'rat', name: 'Rat', short: 'Rat', cost: 1, power: 1, arch: 'strat', token: true, text: 'On Reveal: Next turn, your opponent gets -1 fire and you get +1.' },
+  { id: 'snake', name: 'Snake', short: 'Snake', cost: 2, power: 2, arch: 'vote', token: true, text: "On Reveal: Next turn, locations have no effect. If that shuts off The Outback's turn 7, the game ends after this turn." },
   { id: 'fakeidol', name: 'Fake Idol', short: 'Fake Idol', cost: 1, power: 0, arch: 'event', type: 'event', token: true, text: 'Scenario: Does nothing. Bob made it out of a stick.' },
   { id: 'goat', name: 'Goat', short: 'Goat', cost: 0, power: 0, arch: 'goat', token: true, text: 'Takes up a spot. Does nothing.' }
 ];
@@ -140,7 +144,8 @@ const CARD_TIER = {
   kelly: 1, phillip: 1, wade: 1,
   necklace: 1, shotdark: 1, nullifier: 1, extravote: 1, doordie: 1,
   rudy: 1, ethan: 1, lex: 1, vecepia: 1, robc: 1, chrisd: 1, terry: 1, yul: 1, yauman: 1, dreamz: 1, james: 1, bob: 1, steph: 1, ian: 1,
-  tai: 1, wendell: 1, flint: 1, elisabeth: 1, holloway: 1, nwhite: 1
+  tai: 1, wendell: 1, flint: 1, elisabeth: 1, holloway: 1, nwhite: 1,
+  sue: 2
 };
 
 let RNG = Math.random;
@@ -171,8 +176,9 @@ function draw(g, p, n = 1) {
 
 // Face-down cards (The Voting Booth, Natalie White) sit in L.hid until the game ends: they hold a space but don't count yet.
 function occ(L, p) { return L.sides[p].length + (L.hid ? L.hid[p].length : 0); }
-const hidesAt = L => (L.revealed && L.id === 'urn') || L.sides.some(sd => sd.some(o => o.id === 'nwhite'));
-function cap(L) { if (L.revealed) { if (L.id === 'exile') return 1; if (L.id === 'fire') return 2; } return 4; }
+const hidesAt = L => (live(L) && L.id === 'urn') || L.sides.some(sd => sd.some(o => o.id === 'nwhite'));
+const live = L => L.revealed && !L.off; // a revealed location whose effect is working this turn (a Snake switches them off)
+function cap(L) { if (live(L)) { if (L.id === 'exile') return 1; if (L.id === 'fire') return 2; } return 4; }
 function space(g, li, p) {
   const L = g.locs[li];
   return cap(L) - occ(L, p) - g.players[p].staged.filter(s => s.loc === li).length;
@@ -232,20 +238,23 @@ function gameWinner(g) { const { w, t } = standing(g); if (w[0] !== w[1]) return
 
 function place(g, c, li, p) { c.owner = p; c.loc = li; g.locs[li].sides[p].push(c); }
 function removeFrom(g, c) { const s = g.locs[c.loc].sides[c.owner]; s.splice(s.indexOf(c), 1); c.loc = -1; }
-const isImmunity = L => L.revealed && L.id === 'immunity';
+const isImmunity = L => live(L) && L.id === 'immunity';
 
 function revealLoc(g, li) {
   const L = g.locs[li]; L.revealed = true; emit(g, { t: 'loc', li });
+  if (L.off) { emit(g, { t: 'snaked', li }); return; } // revealed while snaked: its reveal effect never happens
   if (L.id === 'merge') { draw(g, 0, 2); draw(g, 1, 2); }
   if (L.id === 'outback') extendGame(g);
 }
 
 function startTurn(g) {
   g.turn++;
+  const off = g.snakeTurn === g.turn; g.locs.forEach(L => { L.off = off; });
+  if (off) emit(g, { t: 'locsoff' });
   if (g.turn <= 3) revealLoc(g, g.turn - 1);
   if (g.turn === g.lastTurn && !g.finalDoubled) { g.pending *= 2; g.finalDoubled = true; } // votes double on the final turn
   g.stakes = g.pending;
-  for (let p = 0; p < 2; p++) { const P = g.players[p]; draw(g, p); P.energy = g.turn + P.fireAlways + P.fireNext; P.fireNext = 0; }
+  for (let p = 0; p < 2; p++) { const P = g.players[p]; draw(g, p); P.energy = Math.max(0, g.turn + P.fireAlways + P.fireNext); P.fireNext = 0; }
   // Start of Turn abilities, for cards already on the board
   g.locs.forEach(L => {
     const all = [...L.sides[0], ...L.sides[1]];
@@ -275,7 +284,7 @@ function voteOut(g, c) {
     const d = [0, 1, 2].filter(i => occ(g.locs[i], c.owner) < cap(g.locs[i]));
     if (d.length) { c.perm += 3; place(g, c, pick(d), c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'back', uid: c.uid, id: c.id }); }
   } else {
-    const ei = g.locs.findIndex(M => M.revealed && M.id === 'edge');
+    const ei = g.locs.findIndex(M => live(M) && M.id === 'edge');
     if (ei >= 0 && ei !== from && occ(g.locs[ei], c.owner) < cap(g.locs[ei])) { place(g, c, ei, c.owner); g.gone.splice(g.gone.indexOf(goneEntry), 1); emit(g, { t: 'edge', uid: c.uid, id: c.id }); }
   }
   return true;
@@ -283,7 +292,7 @@ function voteOut(g, c) {
 
 function playEffects(g, c, li, p) {
   const L = g.locs[li], def = CARD[c.id], op = 1 - p;
-  if (L.revealed) {
+  if (live(L)) {
     if (L.id === 'loved') draw(g, p);
     if (L.id === 'flintreward') g.players[p].fireNext += 1;
     if (def.type !== 'event') {
@@ -341,6 +350,9 @@ function playEffects(g, c, li, p) {
     case 'elisabeth':
       if (L.id !== 'outback') { L.id = 'outback'; L.revealed = true; emit(g, { t: 'outback', li }); extendGame(g); }
       break;
+    case 'sue': { const H = g.players[p].hand; let n = 0; for (const id of ['rat', 'snake']) if (H.length < 7) { H.push(mk(g, id, p)); n++; } emit(g, { t: 'sue', owner: p, n }); break; }
+    case 'rat': g.players[p].fireNext += 1; g.players[op].fireNext -= 1; emit(g, { t: 'rat', owner: p }); break;
+    case 'snake': g.snakeTurn = g.turn + 1; emit(g, { t: 'snake', owner: p }); break;
     case 'bob': { const H = g.players[op].hand; if (H.length < 7) { H.push(mk(g, 'fakeidol', op)); emit(g, { t: 'fakeidol', owner: op }); } break; }
     case 'phillip':
       if (occ(L, op) < cap(L)) { removeFrom(g, c); place(g, c, li, op); emit(g, { t: 'mole', uid: c.uid, id: c.id }); }
@@ -419,9 +431,9 @@ function* endOfTurn(g) {
   for (const L of g.locs) for (const c of [...L.sides[0], ...L.sides[1]]) {
     if (c.id === 'tyson' && c.turn === g.turn - 1) { emit(g, { t: 'tyson', id: c.id }); voteOut(g, c); }
   }
-  for (const L of g.locs) if (L.revealed && L.id === 'island') [...L.sides[0], ...L.sides[1]].forEach(o => o.perm += 1);
+  for (const L of g.locs) if (live(L) && L.id === 'island') [...L.sides[0], ...L.sides[1]].forEach(o => o.perm += 1);
   for (const L of g.locs) {
-    if (!L.revealed || L.id !== 'tribal') continue;
+    if (!live(L) || L.id !== 'tribal') continue;
     const all = [...L.sides[0], ...L.sides[1]];
     if (all.length >= 2) {
       const m = Math.min(...all.map(o => power(g, o)));
@@ -431,7 +443,7 @@ function* endOfTurn(g) {
     }
   }
   if (g.turn === 4) for (const L of g.locs) {
-    if (!L.revealed || L.id !== 'swap') continue;
+    if (!live(L) || L.id !== 'swap') continue;
     const stay = [L.sides[0].filter(fixedCard), L.sides[1].filter(fixedCard)];
     const ns = [L.sides[1].filter(c => !fixedCard(c)).concat(stay[0]), L.sides[0].filter(c => !fixedCard(c)).concat(stay[1])];
     L.sides = ns[0].length <= cap(L) && ns[1].length <= cap(L) ? ns : [L.sides[1], L.sides[0]]; // no room to stay put: Rudy swaps too
@@ -446,6 +458,12 @@ function* endOfTurn(g) {
       L.sides[p].forEach(o => { o.perm += 2; });
       emit(g, { t: 'ian', id: c.id }); yield { t: 'ian' };
     }
+  }
+  // A Snake played on turn 6 switches off The Outback for turn 7, so there is no turn 7
+  if (g.lastTurn === 7 && g.turn === 6 && g.snakeTurn === 7 && g.locs.some(L => L.revealed && L.id === 'outback')) {
+    g.lastTurn = 6; emit(g, { t: 'snakeend' });
+    if (!g.finalDoubled) { g.pending *= 2; g.finalDoubled = true; } // the last turn of a game always doubles the votes
+    yield { t: 'snakeend' };
   }
   if (g.turn >= g.lastTurn) {
     // The votes are read: face-down cards flip in the order they were played
