@@ -1375,6 +1375,7 @@ function flushEvents() {
       case 'mole': say(`${who(ev)} slips over to the other side.`); break;
       case 'lex': say(`Lex blindsides his ally: ${who(ev)} switches sides.`); break;
       case 'robc': say(`Rob C. flips the vote: ${CARD[ev.id].short} and ${CARD[ev.id2].short} swap influence.`); break;
+      case 'plan': say(ev.ok ? `Executed Plan: the votes land on ${CARD[ev.id].name}, right on cue.` : 'Executed Plan: the plan falls apart. There is no card to vote out.'); break;
       case 'sue': say(ev.owner === 0 ? `Sue Hawk hands you a Rat and a Snake.` : `Sue Hawk hands ${BOT.name} a Rat and a Snake.`); break;
       case 'rat': say(ev.owner === 0 ? `The Rat gets into the rice: next turn you get +1 fire, ${BOT.name} gets −1.` : `${BOT.name}'s Rat gets into the rice: next turn you get −1 fire.`); break;
       case 'snake': say(`${ev.owner === 0 ? 'Your' : BOT.name + "'s"} Snake strikes: next turn, locations have no effect.`); break;
