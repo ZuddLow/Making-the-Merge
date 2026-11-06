@@ -200,7 +200,11 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .loc p { margin: 0; font-size: 11px; line-height: 1.2; color: var(--sand-dim); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .loc.art p { color: #d7cfb6; text-shadow: 0 1px 2px rgba(0,0,0,.9); }
 .loc.hidden h3 { color: var(--sand-dim); }
-.loc.new { animation: glow 1.2s ease-out; }
+.loc.new { animation: glow 1.2s ease-out, locflip .6s cubic-bezier(.2,.8,.3,1.2); }
+@keyframes locflip { from { transform: perspective(500px) rotateY(90deg) scale(.9); } to { transform: none; } }
+.board.arrive .loc { animation: locin .5s cubic-bezier(.2,.8,.3,1.1) both; }
+.board.arrive .lane:nth-child(2) .loc { animation-delay: .15s; } .board.arrive .lane:nth-child(3) .loc { animation-delay: .3s; }
+@keyframes locin { from { opacity: 0; transform: translateY(14px) scale(.92); } to { opacity: 1; transform: none; } }
 @keyframes glow { from { box-shadow: 0 0 0 2px var(--torch), 0 0 30px rgba(243,162,60,.6); } to { box-shadow: none; } }
 .tot { position: absolute; left: 50%; translate: -50% 0; min-width: 28px; height: 22px; border-radius: 11px; background: var(--bark); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 14px; padding: 0 6px; box-sizing: border-box; }
 .tot i { font-style: normal; font-size: 11px; opacity: .8; margin-left: 2px; }
@@ -333,6 +337,30 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 
 /* ---------- Overlays ---------- */
 .overlay { position: fixed; inset: 0; background: rgba(6,9,7,.86); display: grid; place-items: center; z-index: 30; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+/* ---------- Match intro: you vs them ---------- */
+.intro { position: fixed; inset: 0; z-index: 36; display: grid; grid-template-rows: 1fr auto 1fr; align-items: center; overflow: hidden; cursor: pointer;
+  background: radial-gradient(90% 60% at 50% 50%, #1d2a1f, var(--night) 75%); animation: in-fade .3s ease-out both; }
+.intro.out { animation: in-gone .45s ease-in forwards; }
+.in-side { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center; padding: 0 max(24px, 8vw); max-width: 520px; width: 100%; box-sizing: border-box; justify-self: center; }
+.in-side .card { width: 64px; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); }
+.in-side.me { align-self: end; animation: in-left .6s cubic-bezier(.2,.9,.25,1.1) .1s both; }
+.in-side.foe { align-self: start; grid-template-columns: 1fr 64px; text-align: right; animation: in-right .6s cubic-bezier(.2,.9,.25,1.1) .1s both; }
+.in-side.foe .card { order: 2; }
+.in-name { font-family: var(--display); font-size: clamp(28px, 9vw, 40px); line-height: 1; overflow-wrap: anywhere; }
+.in-side.me .in-name { color: var(--torch); text-shadow: 0 0 20px rgba(243,162,60,.35); }
+.in-side.foe .in-name { color: var(--them); text-shadow: 0 0 20px rgba(147,182,220,.3); }
+.in-sub { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--sand-dim); font-weight: 700; margin-top: 6px; }
+.in-mid { position: relative; display: grid; place-items: center; height: 92px; }
+.in-mid::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: linear-gradient(90deg, transparent, var(--torch) 30%, var(--them) 70%, transparent); transform: rotate(-6deg); animation: in-line .5s ease-out .45s both; }
+.in-vs { position: relative; font-family: var(--display); font-size: 46px; color: var(--sand); background: var(--night); padding: 0 14px; letter-spacing: .04em; text-shadow: 0 0 24px rgba(236,226,198,.35); animation: in-vs .5s cubic-bezier(.2,.9,.25,1.4) .55s both; }
+.in-foot { position: absolute; bottom: max(28px, env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--sand-dim); animation: in-fade .4s 1s both; }
+@keyframes in-fade { from { opacity: 0; } }
+@keyframes in-gone { to { opacity: 0; transform: scale(1.04); } }
+@keyframes in-left { from { opacity: 0; transform: translateX(-60%); } }
+@keyframes in-right { from { opacity: 0; transform: translateX(60%); } }
+@keyframes in-line { from { transform: rotate(-6deg) scaleX(0); } }
+@keyframes in-vs { from { opacity: 0; transform: scale(2.2); } }
+@media (prefers-reduced-motion: reduce) { .intro, .intro *, .intro *::before, .board.arrive .loc, .loc.new { animation-duration: .01s !important; animation-delay: 0s !important; } }
 /* ---------- End-of-match banner: a torch-lit band across the board ---------- */
 .endban { --bc: var(--torch); --bc2: var(--ember); position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; background: rgba(6,9,7,0); animation: eb-dim .5s ease-out forwards; cursor: pointer; }
 .endban.lose { --bc: #93b6dc; --bc2: #3d5b80; }
@@ -559,6 +587,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 <div class="inspect" id="inspect" hidden role="dialog" aria-modal="true" aria-label="Card details"><div class="insp" id="insp"></div><button class="insp-x" id="inspX" aria-label="Close">×</button></div>
 <div class="overlay" id="overlay" hidden><div class="panel" id="panel"></div></div>
 <div class="endban" id="endban" hidden role="alert"></div>
+<div class="intro" id="intro" hidden role="status" aria-live="polite"></div>
 
 <script>
 // ===== Making the Merge: game engine (pure data, no DOM) =====
@@ -1943,7 +1972,7 @@ function render() {
   $('fire').setAttribute('aria-label', `${fireLeft(G, 0)} of ${me.energy} fire left`);
   $('idolBtn').innerHTML = G.idol[0] ? 'Idol played' : 'Play idol<small>double votes</small>';
   $('idolBtn').disabled = G.idol[0] || busy || G.over;
-  $('endBtn').innerHTML = G.over ? `Results<small>${G.result.quit === 1 ? BOT.name + ' quit' : G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>${G.turn === G.lastTurn ? 'Final turn · votes doubled' : `Turn ${G.turn} of ${G.lastTurn}`}</small>`;
+  $('endBtn').innerHTML = G.over ? `Results<small>${G.result.quit === 1 ? BOT.name + ' quit' : G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : G.turn === 0 ? 'Get ready<small>The match is starting</small>' : `${busy ? 'Revealing…' : 'End turn'}<small>${G.turn === G.lastTurn ? 'Final turn · votes doubled' : `Turn ${G.turn} of ${G.lastTurn}`}</small>`;
   $('endBtn').disabled = busy;
 }
 // Exile Island (1) and Fire-Making (2) show only the spaces they allow
@@ -1975,8 +2004,32 @@ function startMatch() {
   BOT = BOTS[Math.floor(Math.random() * BOTS.length)];
   G = newGame(save.deck, BOT.deck);
   G.myDeck = save.deck.slice(); G.deckIdx = save.active; G.myBack = deckBack(save.decks[save.active]); G.foeBack = BOT_BACK[BOT.name] || 'bamboo'; G.seen0 = new Set(); G.played0 = new Set(); G.played1 = new Set();
-  busy = false; sel = null; quitArmed = false;
-  show('game'); beginTurn();
+  busy = true; sel = null; quitArmed = false;
+  show('game'); render();
+  playIntro().then(() => { if (!$('game').hidden && !G.over) { busy = false; beginTurn(); } });
+}
+// Head-to-head splash, then the three face-down locations settle in; location 1 reveals as turn 1 begins.
+async function myName() {
+  try { const m = USER && USER.me ? await USER.me() : null; const n = ((m && m.name) || '').trim().split(/\s+/)[0]; return n || 'You'; } catch (e) { return 'You'; }
+}
+async function playIntro() {
+  const name = await Promise.race([myName(), sleep(400).then(() => 'You')]);
+  const deck = save.decks[G.deckIdx], el = $('intro');
+  el.innerHTML = `<div class="in-side me">${backHTML(G.myBack)}<div><div class="in-name">${esc(name)}</div><div class="in-sub">${esc(deck ? deck.name : 'Your tribe')}</div></div></div>
+    <div class="in-mid"><div class="in-vs">VS</div></div>
+    <div class="in-side foe">${backHTML(G.foeBack)}<div><div class="in-name">${esc(BOT.name)}</div><div class="in-sub">${esc(BOT.style)}</div></div></div>
+    <div class="in-foot">Win 2 of 3 locations</div>`;
+  el.className = 'intro'; el.hidden = false;
+  await new Promise(res => {
+    let done = false;
+    const go = () => { if (done) return; done = true; clearTimeout(t); el.onclick = null; res(); };
+    const t = setTimeout(go, reduceMotion() ? 1800 : 2800);
+    el.onclick = go;
+  });
+  el.classList.add('out');
+  const board = $('board'); board.classList.remove('arrive'); void board.offsetWidth; board.classList.add('arrive');
+  await sleep(450); el.hidden = true;
+  await sleep(900); board.classList.remove('arrive');
 }
 function beginTurn() {
   startTurn(G);
@@ -2117,7 +2170,7 @@ function closeBanner() {
   setTimeout(() => { b.hidden = true; b.classList.remove('out'); if (G && G.over && !$('game').hidden) finish(); }, reduceMotion() ? 0 : 420);
 }
 $('endban').addEventListener('click', closeBanner);
-function goHome() { clearTimeout(banTimer); $('endban').hidden = true; $('overlay').hidden = true; renderHome(); show('home'); }
+function goHome() { clearTimeout(banTimer); $('intro').hidden = true; $('endban').hidden = true; $('overlay').hidden = true; renderHome(); show('home'); }
 function settle() {
   const r = G.result, won = r.winner === 0, tie = r.winner === -1;
   if (!G.settled) { // rewards are applied once, however often the results are reopened
