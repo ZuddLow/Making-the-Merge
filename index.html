@@ -333,6 +333,32 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 
 /* ---------- Overlays ---------- */
 .overlay { position: fixed; inset: 0; background: rgba(6,9,7,.86); display: grid; place-items: center; z-index: 30; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+/* ---------- End-of-match banner: a torch-lit band across the board ---------- */
+.endban { --bc: var(--torch); --bc2: var(--ember); position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; background: rgba(6,9,7,0); animation: eb-dim .5s ease-out forwards; cursor: pointer; }
+.endban.lose { --bc: #93b6dc; --bc2: #3d5b80; }
+.endban.tie { --bc: var(--sand); --bc2: var(--sand-dim); }
+.endban.out { animation: eb-undim .45s ease-in forwards; }
+.eb-band { position: relative; width: 100%; overflow: hidden; display: grid; justify-items: center; gap: 6px; padding: 26px 16px 22px; text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(12,18,15,.96) 14%, rgba(12,18,15,.96) 86%, transparent);
+  border-block: 2px solid color-mix(in srgb, var(--bc) 70%, transparent); box-shadow: 0 0 40px color-mix(in srgb, var(--bc) 35%, transparent);
+  animation: eb-in .55s cubic-bezier(.2,.9,.25,1.15) both; }
+.endban.out .eb-band { animation: eb-away .45s ease-in forwards; }
+.eb-band::before { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--bc) 30%, transparent) 50%, transparent 65%); translate: -100% 0; animation: eb-sweep 1.3s .45s ease-out forwards; pointer-events: none; }
+.eb-eyebrow { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; font-weight: 700; color: var(--sand-dim); }
+.eb-word { font-family: var(--display); font-weight: 400; font-size: clamp(44px, 15vw, 76px); line-height: .95; letter-spacing: .04em; text-transform: uppercase;
+  background: linear-gradient(180deg, #fff6df 0%, var(--bc) 55%, var(--bc2) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.6)) drop-shadow(0 0 18px color-mix(in srgb, var(--bc) 45%, transparent)); animation: eb-word .7s .1s cubic-bezier(.2,.9,.25,1.2) both; }
+.eb-sub { font-size: 16px; font-weight: 600; color: var(--sand); max-width: 30ch; text-wrap: balance; }
+.eb-delta { font-family: var(--display); font-size: 18px; color: var(--bc); font-variant-numeric: tabular-nums; }
+.eb-tap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--sand-dim); opacity: .7; margin-top: 4px; }
+@keyframes eb-dim { to { background: rgba(6,9,7,.55); } }
+@keyframes eb-undim { from { background: rgba(6,9,7,.55); } to { background: rgba(6,9,7,0); } }
+@keyframes eb-in { from { transform: scaleY(0); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes eb-away { to { transform: scaleY(0); opacity: 0; } }
+@keyframes eb-word { from { transform: scale(1.6); opacity: 0; letter-spacing: .3em; } to { transform: none; opacity: 1; } }
+@keyframes eb-sweep { to { translate: 100% 0; } }
+@media (prefers-reduced-motion: reduce) { .endban, .eb-band, .eb-word, .eb-band::before { animation-duration: .01s !important; animation-delay: 0s !important; } .endban { background: rgba(6,9,7,.55); } }
+.quit.home { color: var(--torch); }
 .panel { background: var(--canopy); border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px; width: min(100%, 420px); max-height: 86vh; overflow-y: auto; box-sizing: border-box; display: grid; gap: 14px; }
 .panel h2 { font-size: 30px; line-height: 1; }
 .panel.win h2 { color: var(--torch); }
@@ -532,6 +558,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 <div class="packfx" id="packfx" hidden role="dialog" aria-modal="true" aria-label="Open Tree Mail"><div class="pf-top"><div class="eyebrow" id="pfStep"></div><h2 id="pfTitle"></h2></div><div class="pf-stage" id="pfStage"></div><div class="pf-bottom" id="pfBottom"></div></div>
 <div class="inspect" id="inspect" hidden role="dialog" aria-modal="true" aria-label="Card details"><div class="insp" id="insp"></div><button class="insp-x" id="inspX" aria-label="Close">×</button></div>
 <div class="overlay" id="overlay" hidden><div class="panel" id="panel"></div></div>
+<div class="endban" id="endban" hidden role="alert"></div>
 
 <script>
 // ===== Making the Merge: game engine (pure data, no DOM) =====
@@ -1884,8 +1911,8 @@ function render() {
   const pend = G.pending !== G.stakes ? ` → <b>${G.pending}</b>` : '';
   $('stakes').innerHTML = `Votes <b>${G.stakes}</b>${pend}`;
   $('goneBtn').innerHTML = `Out<b>${G.gone.length}</b>`;
-  $('quitBtn').textContent = quitArmed ? `Quit (−${G.stakes})?` : 'Quit';
-  $('quitBtn').className = 'quit' + (quitArmed ? ' arm' : '');
+  $('quitBtn').textContent = G.over ? 'Home' : quitArmed ? `Quit (−${G.stakes})?` : 'Quit';
+  $('quitBtn').className = 'quit' + (G.over ? ' home' : quitArmed ? ' arm' : '');
   const selCard = sel && me.hand.find(c => c.uid === sel);
   $('board').innerHTML = G.locs.map((L, li) => {
     const def = LOC[L.id], a = L.revealed ? ART.locs[L.id] : null;
@@ -1916,7 +1943,7 @@ function render() {
   $('fire').setAttribute('aria-label', `${fireLeft(G, 0)} of ${me.energy} fire left`);
   $('idolBtn').innerHTML = G.idol[0] ? 'Idol played' : 'Play idol<small>double votes</small>';
   $('idolBtn').disabled = G.idol[0] || busy || G.over;
-  $('endBtn').innerHTML = G.over ? `See results<small>${G.result.quit === 1 ? BOT.name + ' quit' : G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>${G.turn === G.lastTurn ? 'Final turn · votes doubled' : `Turn ${G.turn} of ${G.lastTurn}`}</small>`;
+  $('endBtn').innerHTML = G.over ? `Results<small>${G.result.quit === 1 ? BOT.name + ' quit' : G.result.winner === 0 ? 'You won' : G.result.winner === 1 ? BOT.name + ' won' : 'Tie'}</small>` : `${busy ? 'Revealing…' : 'End turn'}<small>${G.turn === G.lastTurn ? 'Final turn · votes doubled' : `Turn ${G.turn} of ${G.lastTurn}`}</small>`;
   $('endBtn').disabled = busy;
 }
 // Exile Island (1) and Fire-Making (2) show only the spaces they allow
@@ -1958,7 +1985,7 @@ function beginTurn() {
   flushEvents(); sel = null; defaultDetail(); render(); animateBoard(snap);
   if (G.turn === G.lastTurn) pulse($('stakes'));
   if (G.players[0].energy > G.turn) pulse($('fire'));
-  if (botWantsQuit(G, 1)) { quit(G, 1); logLine(`${BOT.name} quit the game.`, 'them'); render(); }
+  if (botWantsQuit(G, 1)) { quit(G, 1); logLine(`${BOT.name} quit the game.`, 'them'); matchOver(); }
 }
 async function endTurn() {
   if (busy || G.over) return;
@@ -2000,7 +2027,7 @@ async function endTurn() {
     await sleep(step.t === 'reveal' ? 1900 : step.t === 'after' ? (snap.changed ? 1500 : 500) : 2100);
   }
   flashUid = null; flushEvents(); busy = false;
-  if (G.over) { render(); animateBoard(snap); } else beginTurn();
+  if (G.over) { busy = true; render(); animateBoard(snap); await sleep(900); busy = false; matchOver(); } else beginTurn();
 }
 
 // ----- Board animation: compare the board before and after each step -----
@@ -2066,7 +2093,32 @@ function animateBoard(prev) {
   FX = [];
   prev.changed = changed;
 }
-function finish() {
+// The match just ended: pay out, flash a Victory / Defeat banner for a few seconds, then open the results.
+let banTimer = null;
+function matchOver() {
+  settle(); render();
+  const r = G.result, won = r.winner === 0, tie = r.winner === -1, { delta, riceGain } = G.settled;
+  const word = tie ? 'Tie' : won ? 'Victory' : 'Defeat';
+  const eyebrow = r.quit === 1 ? `${esc(BOT.name)} quit` : r.quit === 0 ? 'You quit' : 'The votes are in';
+  const sub = r.quit === 1 ? `${esc(BOT.name)} walked away. The match is over.` : r.quit === 0 ? 'You walked away from the vote.'
+    : tie ? 'Nobody wins the jury.' : won ? 'You carried the most locations.' : `${esc(BOT.name)} carried the most locations.`;
+  const pay = `${delta > 0 ? '+' : delta < 0 ? '−' : '±'}${Math.abs(delta)} vote${Math.abs(delta) === 1 ? '' : 's'}${riceGain ? ` · +${riceGain} rice` : ''}`;
+  const b = $('endban');
+  b.className = 'endban ' + (tie ? 'tie' : won ? 'win' : 'lose');
+  b.innerHTML = `<div class="eb-band"><div class="eb-eyebrow">${eyebrow}</div><div class="eb-word">${word}</div><div class="eb-sub">${sub}</div><div class="eb-delta">${pay}</div><div class="eb-tap">Tap to continue</div></div>`;
+  b.hidden = false;
+  clearTimeout(banTimer);
+  banTimer = setTimeout(closeBanner, reduceMotion() ? 4500 : 5100);
+}
+function closeBanner() {
+  const b = $('endban'); if (b.hidden || b.classList.contains('out')) return;
+  clearTimeout(banTimer);
+  b.classList.add('out');
+  setTimeout(() => { b.hidden = true; b.classList.remove('out'); if (G && G.over && !$('game').hidden) finish(); }, reduceMotion() ? 0 : 420);
+}
+$('endban').addEventListener('click', closeBanner);
+function goHome() { clearTimeout(banTimer); $('endban').hidden = true; $('overlay').hidden = true; renderHome(); show('home'); }
+function settle() {
   const r = G.result, won = r.winner === 0, tie = r.winner === -1;
   if (!G.settled) { // rewards are applied once, however often the results are reopened
     const delta = tie ? 0 : won ? r.stakes : -r.stakes;
@@ -2083,6 +2135,10 @@ function finish() {
     persist();
     G.settled = { delta, riceGain, unlocked: [2, 3, 4].filter(t => before < TIERS_INFO[t].at && save.maxVotes >= TIERS_INFO[t].at) };
   }
+}
+function finish() {
+  settle();
+  const r = G.result, won = r.winner === 0, tie = r.winner === -1;
   const { delta, riceGain, unlocked } = G.settled;
   const title = r.quit === 0 ? 'You quit.' : r.quit === 1 ? `${BOT.name} quit!` : tie ? 'A dead tie.' : won ? 'Sole Survivor!' : 'The tribe has spoken.';
   const sub = r.quit >= 0 ? (won ? 'They walked away rather than face the vote.' : 'You walked away before the final vote.') : tie ? 'Nobody wins the jury. No votes change hands.' : won ? 'You carried the vote at the most locations.' : `${BOT.name} carried the vote at the most locations.`;
@@ -2093,12 +2149,10 @@ function finish() {
     <div class="earn"><span class="rice"><span class="grain"></span>+${riceGain} rice</span><span>${save.rice} rice total</span></div>
     ${unlocked.map(t => `<p class="unlock"><b>${TIERS_INFO[t].name} unlocked.</b> Those cards can now arrive in Tree Mail.</p>`).join('')}
     <div><div class="sumrow eyebrow"><span>Location</span><span>You</span><span>${BOT.name}</span></div>${rows}</div>
-    <div class="btns"><button class="btn" id="goHome">Home</button><button class="btn primary" id="again">Play again</button></div>
-    <button class="btn" id="viewBoard">View the board</button>`;
+    <div class="btns"><button class="btn" id="viewBoard">View board</button><button class="btn primary" id="goHome">Home</button></div>`;
   $('overlay').hidden = false;
   $('viewBoard').onclick = () => { $('overlay').hidden = true; render(); };
-  $('goHome').onclick = () => { $('overlay').hidden = true; renderHome(); show('home'); };
-  $('again').onclick = () => { $('overlay').hidden = true; startMatch(); };
+  $('goHome').onclick = goHome;
 }
 
 $('recapBtn').onclick = () => {
@@ -2129,9 +2183,10 @@ $('playBtn').onclick = startMatch;
 $('endBtn').onclick = () => { if (G && G.over) finish(); else endTurn(); };
 $('idolBtn').onclick = () => { if (!busy && playIdol(G, 0)) { logLine(G.turn === G.lastTurn ? 'You play your idol. Votes double!' : 'You play your idol. Votes double next turn.', 'me'); render(); pulse($('stakes')); } };
 $('quitBtn').onclick = () => {
-  if (busy || G.over) return;
+  if (G && G.over) { if (!busy) goHome(); return; }
+  if (busy) return;
   if (!quitArmed) { quitArmed = true; render(); setTimeout(() => { if (quitArmed) { quitArmed = false; if (G && !G.over) render(); } }, 3000); return; }
-  quitArmed = false; quit(G, 0); finish();
+  quitArmed = false; quit(G, 0); matchOver();
 };
 // Inspect: a card, enlarged, with its details underneath. Tap anywhere to close.
 function closeInspect() { $('inspect').hidden = true; }
@@ -2210,7 +2265,7 @@ for (const box of ['hand', 'board']) {
 $('hand').addEventListener('keydown', e => {
   const el = e.target.closest('.card'); const c = el && G.players[0].hand.find(x => x.uid === +el.dataset.uid); if (!c) return;
   if (e.key === 'Enter') gameQuickView(c, { where: 'hand' });
-  if (['1', '2', '3'].includes(e.key) && !busy && stage(G, 0, c.uid, +e.key - 1)) render();
+  if (['1', '2', '3'].includes(e.key) && !busy && !G.over && stage(G, 0, c.uid, +e.key - 1)) render();
 });
 $('board').addEventListener('click', e => {
   if (!G) return;
