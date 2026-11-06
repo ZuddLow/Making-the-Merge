@@ -359,6 +359,160 @@
    "z": 1.24,
    "px": 38.5,
    "py": 23.9
+  },
+  "bob": {
+   "file": "art/cards-bob.jpg",
+   "r": 0.6648936170212766,
+   "z": 1.18,
+   "px": 0,
+   "py": 0
+  },
+  "chrisd": {
+   "file": "art/cards-chrisd.jpg",
+   "r": 0.6513661202185792,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "dreamz": {
+   "file": "art/cards-dreamz.jpg",
+   "r": 0.6671428571428571,
+   "z": 1.13,
+   "px": 18.2,
+   "py": 9.7
+  },
+  "elisabeth": {
+   "file": "art/cards-elisabeth.jpg",
+   "r": 0.7507507507507507,
+   "z": 1.14,
+   "px": 35.8,
+   "py": 4
+  },
+  "ethan": {
+   "file": "art/cards-ethan.jpg",
+   "r": 0.6521739130434783,
+   "z": 1.29,
+   "px": 24.2,
+   "py": 4.5
+  },
+  "flint": {
+   "file": "art/cards-flint.jpg",
+   "r": 0.75,
+   "z": 1.29,
+   "px": 46.3,
+   "py": 49.9
+  },
+  "holloway": {
+   "file": "art/cards-holloway.jpg",
+   "r": 0.6664285714285715,
+   "z": 1.31,
+   "px": 53,
+   "py": 0.7
+  },
+  "ian": {
+   "file": "art/cards-ian.jpg",
+   "r": 0.6983240223463687,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "james": {
+   "file": "art/cards-james.jpg",
+   "r": 0.6666666666666666,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "kelly": {
+   "file": "art/cards-kelly.jpg",
+   "r": 1.3333333333333333,
+   "z": 1,
+   "px": 76.7,
+   "py": 0
+  },
+  "lex": {
+   "file": "art/cards-lex.jpg",
+   "r": 0.6514285714285715,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "phillip": {
+   "file": "art/cards-phillip.jpg",
+   "r": 0.75,
+   "z": 1,
+   "px": 50,
+   "py": 0
+  },
+  "robc": {
+   "file": "art/cards-robc.jpg",
+   "r": 0.6486486486486487,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "rudy": {
+   "file": "art/cards-rudy.jpg",
+   "r": 0.6666666666666666,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "steph": {
+   "file": "art/cards-steph.jpg",
+   "r": 0.6666666666666666,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "tai": {
+   "file": "art/cards-tai.jpg",
+   "r": 0.6364583333333333,
+   "z": 1.35,
+   "px": 68.3,
+   "py": 3.5
+  },
+  "terry": {
+   "file": "art/cards-terry.jpg",
+   "r": 1,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "vecepia": {
+   "file": "art/cards-vecepia.jpg",
+   "r": 0.6607142857142857,
+   "z": 1.12,
+   "px": 8.9,
+   "py": 12.9
+  },
+  "wade": {
+   "file": "art/cards-wade.jpg",
+   "r": 0.6666666666666666,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "wendell": {
+   "file": "art/cards-wendell.jpg",
+   "r": 0.6664285714285715,
+   "z": 1.41,
+   "px": 58.2,
+   "py": 9.3
+  },
+  "yauman": {
+   "file": "art/cards-yauman.jpg",
+   "r": 1,
+   "z": 1,
+   "px": 50,
+   "py": 35
+  },
+  "yul": {
+   "file": "art/cards-yul.jpg",
+   "r": 0.6664285714285715,
+   "z": 1.33,
+   "px": 50,
+   "py": 35
   }
  },
  "locs": {
@@ -444,6 +598,13 @@
    "r": 1.5,
    "z": 1,
    "px": 29.9,
+   "py": 50
+  },
+  "outback": {
+   "file": "art/locs-outback.jpg",
+   "r": 1.3333333333333333,
+   "z": 1,
+   "px": 50,
    "py": 50
   }
  }

@@ -592,7 +592,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const LSK = 'mtm.save';
 function freshSave() {
   const owned = {}; STARTER.forEach(id => { owned[id] = { n: 1, v: [] }; });
-  return { v: 3, votes: 0, maxVotes: 0, wins: 0, losses: 0, rice: PACK_COST, owned, decks: [{ name: 'Starter', cards: STARTER.slice() }], active: 0, deck: STARTER.slice(), stats: { games: 0, you: {}, foe: {} }, fresh: [], defaultBack: 'torch', updated: 0 };
+  return { v: 3, votes: 0, maxVotes: 0, wins: 0, losses: 0, rice: PACK_COST, owned, decks: [{ name: 'Starter', cards: STARTER.slice() }, ...Array(MAX_DECKS - 1).fill(null)], active: 0, deck: STARTER.slice(), stats: { games: 0, you: {}, foe: {} }, fresh: [], defaultBack: 'torch', updated: 0 };
 }
 function normalize(s) {
   const out = freshSave();
