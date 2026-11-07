@@ -1378,7 +1378,9 @@ function renderSaveNote() {
     if (!A || !A.configured) { note.textContent = 'Progress is saved on this device.'; note.hidden = !capsChecked; return; }
     if (!capsChecked) { note.hidden = true; return; }
     if (u) note.innerHTML = `Signed in as ${esc(u.displayName || u.email || 'you')} · <button class="linkbtn" id="signOutBtn">Sign out</button>`;
-    else note.textContent = 'Sign in with Google to save your collection to your account.';
+    else note.textContent = /iPhone|iPad|iPod/.test(navigator.userAgent) && /CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(navigator.userAgent)
+      ? 'Google sign-in is unreliable in this browser on iPhone. Open the game in Safari to sign in.' // iOS Chrome/Firefox/Edge/Google app mishandle the sign-in pop-up
+      : 'Sign in with Google to save your collection to your account.';
     note.hidden = false;
     const so = $('signOutBtn'); if (so) so.onclick = () => A.signOut();
     return;
