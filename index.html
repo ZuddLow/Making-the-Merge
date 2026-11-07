@@ -92,6 +92,9 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .tabbar button:hover, .tabbar button:active { color: var(--sand); }
 @media (max-height: 700px) { .emblem { width: 96px; } .hero h2 { font-size: 24px; } .playbtn span { font-size: 26px; } }
+/* Small or zoomed phones (iPhone Display Zoom reports about 320 x 650) */
+@media (max-height: 760px) { .home { gap: 8px; } .home-main { gap: 10px; } .emblem { width: clamp(72px, 13vh, 110px); } .hero { gap: 4px; padding: 0; } .hero h2 { font-size: 24px; } .playbtn { padding: 10px 16px 8px; } .playbtn span { font-size: 26px; } .deckcard { padding: 10px 12px 12px; gap: 6px; } .dc-name { font-size: 18px; } .mailrow { padding: 8px 10px 8px 12px; } .home-foot { gap: 6px; } }
+@media (max-width: 360px) { .wordmark { font-size: 14px; } .hud { gap: 8px; } .hud-chips { gap: 6px; } .chip { padding: 5px 9px 5px 8px; gap: 4px; } .chip b { font-size: 15px; } .chip small { display: none; } .chip.signin { font-size: 12px; padding: 6px 10px; white-space: nowrap; } }
 
 /* ---------- Card ---------- */
 .card { --ac: var(--a-goat); position: relative; aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; color: #fff;
@@ -181,6 +184,12 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .lane { display: grid; grid-template-rows: 1fr auto 1fr; gap: 16px; min-height: 0; border-radius: 12px; padding: 4px; }
 .lane.ok { background: rgba(243,162,60,.08); box-shadow: inset 0 0 0 1px rgba(243,162,60,.5); }
 .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; align-content: start; }
+@supports (container-type: size) {
+  /* each slot sizes itself to the space its lane has, so a full side of 4 never runs under the hand */
+  .slots { container-type: size; min-height: 0; }
+  .slots > * { width: min(100%, calc((100cqh - 5px) / 2 * .75)); justify-self: center; }
+  .slots.one > * { width: min(calc(50% - 2.5px), calc((100cqh - 5px) / 2 * .75)); }
+}
 .slots.them { align-content: end; }
 .slots.one { grid-template-columns: 1fr; justify-items: center; }
 .slots.one > * { width: calc(50% - 2.5px); }
@@ -365,6 +374,14 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 @keyframes in-line { from { transform: rotate(-6deg) scaleX(0); } }
 @keyframes in-vs { from { opacity: 0; transform: scale(2.2); } }
 @media (prefers-reduced-motion: reduce) { .intro, .intro *, .intro *::before, .board.arrive .loc, .loc.new { animation-duration: .01s !important; animation-delay: 0s !important; } }
+/* ---------- Small or zoomed phones: the match screen ---------- */
+@media (max-height: 720px) {
+  #game { gap: 8px; padding-block: 6px 12px; }
+  .lane { gap: 12px; } .loc { padding: 12px 5px; min-height: 0; height: 92px; box-sizing: border-box; overflow: visible; } .loc p { -webkit-line-clamp: 2; }
+  .fire { width: 60px; height: 60px; } .fire b { font-size: 26px; } .idolbtn, .endbtn { min-height: 46px; } .endbtn { font-size: 15px; }
+}
+@media (max-height: 640px) { .loc { padding: 8px 4px; min-height: 0; height: 48px; } .loc p { display: none; } .loc h3 { font-size: 11px; } .lane { gap: 12px; } }
+@media (max-width: 360px) { .stakes { padding: 4px 9px; font-size: 13px; } .tbtn { padding: 4px 8px; font-size: 12px; } .quit { font-size: 12px; letter-spacing: .04em; } }
 /* ---------- End-of-match banner: a torch-lit band across the board ---------- */
 .endban { --bc: var(--torch); --bc2: var(--ember); position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; background: rgba(6,9,7,0); animation: eb-dim .5s ease-out forwards; cursor: pointer; }
 .endban.lose { --bc: #93b6dc; --bc2: #3d5b80; }
@@ -2020,7 +2037,8 @@ function slotCls(L, p) { const n = Math.max(cap(L), Math.min(4, occ(L, p) + G.pl
 function renderHand(hand) {
   const n = hand.length;
   if (!n) return '<span class="empty">No cards in hand.</span>';
-  const W = $('hand').clientWidth || 340, cw = Math.min(86, W / 4.3);
+  const W = $('hand').clientWidth || 340, cw = Math.min(86, W / 4.3, innerHeight * .125);
+  $('hand').style.height = Math.round(cw * 4 / 3 + 14) + 'px';
   const step = n > 1 ? Math.min(cw + 6, (W - cw - 8) / (n - 1)) : 0;
   const x0 = (W - (step * (n - 1) + cw)) / 2, mid = (n - 1) / 2;
   return hand.map((c, i) => {
