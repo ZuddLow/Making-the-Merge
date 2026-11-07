@@ -13,12 +13,13 @@
   --display: 'Alfa Slab One', Rockwell, 'Roboto Slab', Georgia, serif;
   --body: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
   color-scheme: dark;
+  padding-bottom: 0 !important; /* each screen pads for the home bar itself (see .screen, .tabbar, #game) */
 }
 html, body { height: 100%; }
 body { background: var(--night); color: var(--sand); font-family: var(--body); font-size: 15px; font-weight: 500; overflow: hidden; -webkit-tap-highlight-color: transparent; }
 button { font-family: var(--body); font-weight: 700; color: inherit; cursor: pointer; border: 0; }
 button:focus-visible, .lane:focus-visible, .card:focus-visible, .tile:focus-visible { outline: 2px solid var(--torch); outline-offset: 2px; }
-.screen { height: 100%; max-width: 520px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-sizing: border-box; display: flex; flex-direction: column; }
+.screen { height: 100%; max-width: 520px; margin: 0 auto; padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-sizing: border-box; display: flex; flex-direction: column; }
 .scroll { overflow-y: auto; }
 h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: .01em; }
 .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--sand-dim); font-weight: 700; }
@@ -39,7 +40,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .grain { display: inline-block; width: 7px; height: 12px; border-radius: 50%; background: var(--rice); rotate: 20deg; box-shadow: 4px 2px 0 -1px var(--rice); margin-right: 3px; }
 .vote-ic { width: 12px; height: 15px; border-radius: 2px; background: var(--sand); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%); }
 .rice { font-variant-numeric: tabular-nums; color: var(--rice); }
-.home-main { flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 16px; align-content: safe center; padding-block: 4px; }
+.home-main { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 16px; align-content: safe center; padding-block: 4px; }
 .hero { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 6px 0 4px; }
 .emblem { --p: 0; position: relative; width: clamp(112px, 34vw, 150px); aspect-ratio: 1; border-radius: 50%; background: conic-gradient(var(--torch) calc(var(--p) * 1%), rgba(52,71,58,.7) 0); display: grid; place-items: center; filter: drop-shadow(0 0 22px rgba(243,162,60,.25)); }
 .emblem::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: radial-gradient(circle at 50% 38%, #2c2414, #121a15 70%); box-shadow: inset 0 0 0 1px rgba(243,162,60,.25); }
@@ -64,21 +65,21 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 .mr-txt { flex: 1; min-width: 0; }
 .mr-txt b { font-family: var(--display); font-weight: 400; font-size: 17px; display: block; }
 .mr-txt span { font-size: 13px; color: var(--sand-dim); }
-.home-foot { display: grid; gap: 10px; padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+.home-foot { display: grid; gap: 10px; }
 .playbtn { display: grid; justify-items: center; gap: 0; padding: 14px 16px 12px; border-radius: 16px; color: #2a1503; background: linear-gradient(180deg, #f8bb5c, #f3a23c 45%, #d9542f); box-shadow: 0 0 0 1px rgba(255,220,160,.45) inset, 0 10px 30px rgba(217,84,47,.35), 0 0 40px rgba(243,162,60,.25); text-transform: uppercase; }
 .playbtn span { font-family: var(--display); font-weight: 400; font-size: 32px; line-height: 1; letter-spacing: .04em; }
 .playbtn small { font-size: 12px; letter-spacing: .12em; font-weight: 700; opacity: .75; }
 .playbtn:active { transform: translateY(1px); }
 .linkbtn { background: none; padding: 0; color: var(--torch); font: inherit; font-weight: 700; text-decoration: underline; }
 .home-note { font-size: 12px; color: var(--sand-dim); margin: 0; text-align: center; }
-.tabbar { display: flex; justify-content: space-around; gap: 4px; border-top: 1px solid var(--line); padding-top: 8px; }
+.tabbar { display: flex; justify-content: space-around; gap: 4px; border-top: 1px solid var(--line); padding-top: 8px; padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)); }
 .tabbar button { flex: 1; min-width: 0; background: none; display: grid; justify-items: center; gap: 3px; padding: 4px 2px; color: var(--sand-dim); font-size: 11px; font-weight: 600; letter-spacing: .02em; }
 .tabbar button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .tabbar button:hover, .tabbar button:active { color: var(--sand); }
 @media (max-height: 700px) { .emblem { width: 96px; } .hero h2 { font-size: 24px; } .playbtn span { font-size: 26px; } }
 /* Small or zoomed phones (iPhone Display Zoom reports about 320 x 650) */
-@media (max-height: 760px) { .home { gap: 8px; } .home-main { gap: 10px; } .emblem { width: clamp(72px, 13vh, 110px); } .hero { gap: 4px; padding: 0; } .hero h2 { font-size: 24px; } .playbtn { padding: 10px 16px 8px; } .playbtn span { font-size: 26px; } .deckcard { padding: 10px 12px 12px; gap: 6px; } .dc-name { font-size: 18px; } .mailrow { padding: 8px 10px 8px 12px; } .home-foot { gap: 6px; } }
+@media (max-height: 760px) { .home { gap: 8px; } .home-main { gap: 10px; } .emblem { width: clamp(64px, 11vh, 100px); } .hero { gap: 3px; padding: 0; } .hero h2 { font-size: 23px; margin-top: 2px; } .hero .sub { font-size: 13px; } .playbtn { padding: 10px 16px 8px; } .playbtn span { font-size: 26px; } .deckcard { padding: 10px 12px 12px; gap: 6px; } .dc-name { font-size: 18px; } .mailrow { padding: 8px 10px 8px 12px; } .home-foot { gap: 6px; } }
 @media (max-width: 360px) { .wordmark { font-size: 14px; } .hud { gap: 8px; } .hud-chips { gap: 6px; } .chip { padding: 5px 9px 5px 8px; gap: 4px; } .chip b { font-size: 15px; } .chip small { display: none; } .chip.signin { font-size: 12px; padding: 6px 10px; white-space: nowrap; } }
 
 /* ---------- Card ---------- */
@@ -144,7 +145,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 @keyframes flip { 0% { transform: rotateY(90deg) scale(1.3); } 45% { transform: rotateY(0) scale(1.3); } 75% { transform: scale(1.3); } 100% { transform: none; } }
 
 /* ---------- Game ---------- */
-#game { padding-block: 10px 22px; gap: 12px; }
+#game { padding-block: 10px max(14px, env(safe-area-inset-bottom, 0px)); gap: 12px; }
 .topbar { display: flex; align-items: center; gap: 10px; min-height: 36px; }
 .foe { flex: 1; min-width: 0; }
 .foe b { font-family: var(--display); font-weight: 400; font-size: 17px; color: var(--them); }
@@ -361,7 +362,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap
 @media (prefers-reduced-motion: reduce) { .intro, .intro *, .intro *::before, .board.arrive .loc, .loc.new { animation-duration: .01s !important; animation-delay: 0s !important; } }
 /* ---------- Small or zoomed phones: the match screen ---------- */
 @media (max-height: 720px) {
-  #game { gap: 8px; padding-block: 6px 12px; }
+  #game { gap: 8px; padding-block: 6px max(8px, env(safe-area-inset-bottom, 0px)); }
   .lane { gap: 12px; } .loc { padding: 12px 5px; min-height: 0; height: 92px; box-sizing: border-box; overflow: visible; } .loc p { -webkit-line-clamp: 2; }
   .fire { width: 60px; height: 60px; } .fire b { font-size: 26px; } .idolbtn, .endbtn { min-height: 46px; } .endbtn { font-size: 15px; }
 }
